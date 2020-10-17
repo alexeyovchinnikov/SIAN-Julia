@@ -265,9 +265,29 @@ function AddZeroToVars(poly::MPolyElem, new_ring::MPolyRing)
     return finish(builder)
 end
 
+#############
+
+function GetParameters(x_eqs, y_eqs, u_vars)
+    x_vars = [xv[1] for xv in x_eqs]
+    y_vars = [yv[1] for yv in y_eqs]
+    all_vars = vcat(x_vars, y_vars, u_vars)
+    
+    all_indets = vars(x_eqs[1][2])
+    for i in 2:length(x_eqs)
+        all_indets = union(all_indets, vars(unpack_fraction(x_eqs[i][2])[1]), vars(unpack_fraction(x_eqs[i][2])[2]))
+    end
+
+    for i in 1:length(y_eqs)
+        all_indets = union(all_indets, vars(unpack_fraction(y_eqs[i][2])[1]), vars(unpack_fraction(y_eqs[i][2])[2]))
+    end
+
+    #finding which ones are the parameters
+    return vcat(setdiff(all_indets, all_vars), x_vars)
+end
+
 ############# Main Code
 
-function IdentifiabilityODE(x_eqs, y_eqs, u_vars, params_to_assess, int_cond_to_assess, p)
+function IdentifiabilityODE(x_eqs, y_eqs, u_vars, params_to_assess, p)
 
     println("Solving the problem")
     println(Time(now()))
@@ -281,16 +301,15 @@ function IdentifiabilityODE(x_eqs, y_eqs, u_vars, params_to_assess, int_cond_to_
 
     println("Constructing the maximal system")
     
-    params_to_assess = vcat(params_to_assess, int_cond_to_assess) 
     all_vars   = vcat(x_vars, y_vars, u_vars)
     
     #computing all symbols in the equations
     all_indets = vars(x_eqs[1][2])
-    for i in 2:length(sigma_x)
-        all_indets = union(all_indets, vars(unpack_fraction(sigma_x[i][2])[1]), vars(unpack_fraction(sigma_x[i][2])[2]))
+    for i in 2:length(x_eqs)
+        all_indets = union(all_indets, vars(unpack_fraction(x_eqs[i][2])[1]), vars(unpack_fraction(x_eqs[i][2])[2]))
     end
-    for i in 1:length(sigma_y)
-        all_indets = union(all_indets, vars(unpack_fraction(sigma_y[i][2])[1]), vars(unpack_fraction(sigma_y[i][2])[2]))
+    for i in 1:length(y_eqs)
+        all_indets = union(all_indets, vars(unpack_fraction(y_eqs[i][2])[1]), vars(unpack_fraction(y_eqs[i][2])[2]))
     end
     
     #finding which ones are the parameters
@@ -306,8 +325,8 @@ function IdentifiabilityODE(x_eqs, y_eqs, u_vars, params_to_assess, int_cond_to_
     gens_Rjet = gens(Rjet)
     z_aux = gens_Rjet[end-length(mu)] 
    
-    x_eqs = [[AddOneToVar(unpack_fraction(xeq[1])[1],Rjet), AddZeroToVars(xeq[2],Rjet)] for xeq in x_eqs]
-    y_eqs = [[AddZeroToVar(unpack_fraction(yeq[1])[1],Rjet), AddZeroToVars(yeq[2],Rjet)] for yeq in y_eqs]
+    x_eqs = [[AddOneToVar(unpack_fraction(xeq[1])[1], Rjet), AddZeroToVars(unpack_fraction(xeq[2])[1], Rjet) // AddZeroToVars(unpack_fraction(xeq[2])[2], Rjet)] for xeq in x_eqs]
+    y_eqs = [[AddZeroToVar(unpack_fraction(yeq[1])[1], Rjet), AddZeroToVars(unpack_fraction(yeq[2])[1], Rjet) // AddZeroToVars(unpack_fraction(yeq[2])[2], Rjet)] for yeq in y_eqs]
 
     eqs = vcat(x_eqs, y_eqs)
     Q = foldl(lcm,[unpack_fraction(ex[2])[2] for ex in eqs])
