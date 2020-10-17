@@ -477,13 +477,20 @@ function IdentifiabilityODE(x_eqs, y_eqs, u_vars, params_to_assess, int_cond_to_
   x_theta_vars = all_params
   prolongation_possible = [1 for i in 1:m]
   # (f) ------------------
+  all_x_theta_vars_subs = insert_zeros_to_vals(all_subs[1],all_subs[2])
+  eqs_i_old = Array{fmpq_mpoly}(undef,0)
+  evl_old = Array{fmpq_mpoly}(undef,0)
   while sum(prolongation_possible) > 0
     for i in 1:m
       if prolongation_possible[i] == 1 
         eqs_i = vcat(Et, Y[i][beta[i] + 1])
-        x_theta_vars_sub = [Nemo.lc(evaluate(var,all_subs[1],all_subs[2])) for var in x_theta_vars]
-        evl = [evaluate(eq, vcat(u_hat[1], y_hat[1]), vcat(u_hat[2],y_hat[2])) for eq in eqs_i]
-        JacX = JacobiMatrix3(evl, x_theta_vars, insert_zeros_to_vals(x_theta_vars,x_theta_vars_sub))
+      #  x_theta_vars_sub = [Nemo.lc(evaluate(var,all_subs[1],all_subs[2])) for var in x_theta_vars]
+  #      evl = [evaluate(eq, vcat(u_hat[1], y_hat[1]), vcat(u_hat[2],y_hat[2])) for eq in eqs_i]
+   #     JacX    = JacobiMatrix3(evl, x_theta_vars, all_x_theta_vars_subs)
+        evl     = [evaluate(eq, vcat(u_hat[1], y_hat[1]), vcat(u_hat[2],y_hat[2])) for eq in eqs_i if !(eq in eqs_i_old)]
+        evl_old = vcat(evl_old,evl)
+        JacX    = JacobiMatrix3(evl_old, x_theta_vars, all_x_theta_vars_subs) 
+        eqs_i_old = eqs_i
         if LinearAlgebra.rank(JacX) == length(eqs_i)
           Et = vcat(Et, Y[i][beta[i] + 1])
           beta[i] = beta[i] + 1
@@ -498,13 +505,13 @@ function IdentifiabilityODE(x_eqs, y_eqs, u_vars, params_to_assess, int_cond_to_
             vars_to_add = Set{fmpq_mpoly}(v for v in vrs if !(v in x_theta_vars)) 
             for v in vars_to_add
               x_theta_vars = vcat(x_theta_vars, v)
-              #ord_var = GetOrderVar(v, non_jet_ring)
               ord_var = GetOrderVar2(v, non_jet_ring,n+m+u, s)
-              var_index = findfirst(x->x==ord_var[1], x_vars)
-              poly = X[ var_index ][ ord_var[2] ]
+              #var_idx = findfirst(x->x==ord_var[1], x_vars)
+              var_idx = var_index(ord_var[1])
+              poly = X[ var_idx ][ ord_var[2] ]
               Et = vcat(Et, poly)
               new_to_process = vcat(new_to_process, poly)
-              alpha[ var_index ] = max(alpha[ var_index ], ord_var[2] + 1)
+              alpha[ var_idx ] = max(alpha[ var_idx ], ord_var[2] + 1)
             end
             polys_to_process = new_to_process
           end
@@ -539,11 +546,15 @@ function IdentifiabilityODE(x_eqs, y_eqs, u_vars, params_to_assess, int_cond_to_
   println("Assessing local identifiability")
   theta_l = Array{fmpq_mpoly}(undef,0)
   params_to_assess = [AddZeroToVar(param,Rjet) for param in params_to_assess]
+  Et_eval_base = [evaluate(e, vcat(u_hat[1],y_hat[1]), vcat(u_hat[2],y_hat[2])) for e in Et]
   for param_0 in params_to_assess
     other_params = [v for v in x_theta_vars if v != param_0]
-    Et_subs = [evaluate(e, vcat(u_hat[1],y_hat[1],param_0), vcat(u_hat[2],y_hat[2], Nemo.lc(evaluate(param_0,all_subs[1],all_subs[2])))) for e in Et]
-    other_params_vals = [Nemo.lc(evaluate(var,all_subs[1],all_subs[2])) for var in other_params]
-    JacX = JacobiMatrix3(Et_subs, other_params, insert_zeros_to_vals(other_params,other_params_vals))
+    #Et_subs = [evaluate(e, vcat(u_hat[1],y_hat[1],param_0), vcat(u_hat[2],y_hat[2], evaluate(param_0, all_x_theta_vars_subs))) for e in Et]
+    Et_subs = [evaluate(e, [param_0], [evaluate(param_0, all_x_theta_vars_subs)]) for e in Et_eval_base]
+    #Et_subs = [evaluate(e, vcat(u_hat[1],y_hat[1],param_0), vcat(u_hat[2],y_hat[2], Nemo.lc(evaluate(param_0,all_subs[1],all_subs[2])))) for e in Et]
+    #other_params_vals = [Nemo.lc(evaluate(var,all_subs[1],all_subs[2])) for var in other_params]
+    #JacX = JacobiMatrix3(Et_subs, other_params, insert_zeros_to_vals(other_params,other_params_vals))
+    JacX = JacobiMatrix3(Et_subs, other_params, all_x_theta_vars_subs)
     if LinearAlgebra.rank(JacX) != max_rank 
       theta_l = vcat(theta_l, param_0)
     end
