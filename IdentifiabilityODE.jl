@@ -43,8 +43,8 @@ end
 
 ##################
 
-function AddOneToVar(vr, ring)
-    return str_to_var(MakeDerivative(vr, 1), ring)
+function AddToVar(vr, ring, r)
+    return str_to_var(MakeDerivative(vr, r), ring)
 end
 
 ##################
@@ -52,12 +52,6 @@ end
 function CreateJetRing(var_list, param_list, max_ord)
     varnames = vcat(vec(["$(s)_$i" for s in var_list, i in 0:max_ord]), "z_aux", ["$(s)_0" for s in param_list])
     return Nemo.PolynomialRing(Nemo.QQ, varnames)[1]
-end
-
-##################
-
-function AddZeroToVar(vr, ring)
-    return str_to_var(MakeDerivative(vr, 0), ring)
 end
 
 ##################
@@ -138,12 +132,16 @@ end
 
 ##################
 
-function GetOrderVar2(diff_var, non_jet_ring, shft, s) 
+function GetOrderVar2(diff_var, non_jet_vars, shft, s) 
     idx = var_index(diff_var)
+#    println(diff_var)
     if idx <= shft * (s + 3)
-        return([gens(non_jet_ring)[rem(idx - 1, shft) + 1], div(idx - 1, shft)])
+#        println([non_jet_vars[rem(idx - 1, shft) + 1], div(idx - 1, shft)])
+#        println()
+        return([non_jet_vars[rem(idx - 1, shft) + 1], div(idx - 1, shft)])
     else
-        return([gens(non_jet_ring)[idx - shft*(s + 2) - 1], 0])
+#        println([non_jet_vars[idx - shft*(s + 2) - 1], 0]) 
+        return([non_jet_vars[idx - shft*(s + 2) - 1], 0])
     end
 end
 
@@ -160,16 +158,16 @@ end
 
 ##################
 
-function GetVars(diff_poly, var_list,shft,s)
-    return [v for v in vars(diff_poly) if GetOrderVar2(v, parent(var_list[1]), shft, s)[1] in var_list]
+function GetVars(diff_poly, var_list, non_jet_vars, shft, s)
+    return [v for v in vars(diff_poly) if GetOrderVar2(v, non_jet_vars, shft, s)[1] in var_list]
 end
 
 
 ##################
 
-function CompareDiffVar(dvl, dvr, non_jet_ring, shft, s)
-    vl, hl = GetOrderVar2(dvl, non_jet_ring, shft, s)
-    vr, hr = GetOrderVar2(dvr, non_jet_ring, shft, s)
+function CompareDiffVar(dvl, dvr, non_jet_vars, shft, s)
+    vl, hl = GetOrderVar2(dvl, non_jet_vars, shft, s)
+    vr, hr = GetOrderVar2(dvr, non_jet_vars, shft, s)
     if hl != hr
        return (hl > hr)
     end
@@ -193,6 +191,10 @@ function parent_ring_change(poly::MPolyElem, new_ring::MPolyRing)
     old_ring = parent(poly)
     # construct a mapping for the variable indices
     var_mapping = Array{Any, 1}()
+    
+#    println(poly)
+#    println(symbols(new_ring))    
+#    println()
     for u in symbols(old_ring)
         push!(
             var_mapping,
@@ -285,20 +287,83 @@ function GetParameters(x_eqs, y_eqs, u_vars)
     return vcat(setdiff(all_indets, all_vars), x_vars)
 end
 
+function VarToSymb(gn)
+   symbols(parent(gn))[var_index(gn)]
+end
+
+function AddToVarsInReplica(poly::MPolyElem, mu, new_ring::MPolyRing, r)
+    """
+    Converts a polynomial to a different polynomial ring
+    Input
+      - poly - a polynomial to be converted
+      - new_ring - a polynomial ring such that every variable name
+          appearing in poly appears among the generators
+    Output: a polynomial in new_ring "equal" to poly
+    """
+    old_ring = parent(poly)
+    # construct a mapping for the variable indices
+    var_mapping = Array{Any, 1}()
+    mu_symbols = [VarToSymb(m) for m in mu]
+    for u in setdiff(symbols(old_ring), mu_symbols)
+        push!(
+            var_mapping,
+            findfirst(v -> (string(u,"_",r) == string(v)), symbols(new_ring))
+        )
+    end
+    for u in mu_symbols
+        push!(
+            var_mapping,
+            findfirst(v -> (string(u) == string(v)), symbols(new_ring))
+        )
+    end
+    builder = MPolyBuildCtx(new_ring)
+    for term in zip(exponent_vectors(poly), coeffs(poly))
+        exp, coef = term
+        new_exp = [0 for _ in gens(new_ring)]
+        for i in 1:length(exp)
+            if exp[i] != 0
+                if var_mapping[i] == nothing
+                    throw(Base.ArgumentError("The polynomial contains a variable not present in the new ring $poly"))
+                else
+                    new_exp[var_mapping[i]] = exp[i]
+                end
+            end
+        end
+        push_term!(builder, new_ring.base_ring(coef), new_exp)
+    end
+    return finish(builder)
+end
+
+
+function GenerateReplica(x_eqs, y_eqs, u_vars, r)
+    non_jet_ring = parent(x_eqs[1][1])
+    x_vars = [xv[1] for xv in x_eqs]
+    y_vars = [yv[1] for yv in y_eqs]   
+    mu = setdiff(GetParameters(x_eqs, y_eqs, u_vars), x_vars)
+    varnames = vcat(vec(["$(s)_$i" for s in vcat(x_vars, y_vars, u_vars), i in 1:r]),  ["$(s)" for s in mu])
+    replica_ring = Nemo.PolynomialRing(Nemo.QQ, varnames)[1]
+    x_eqs_replica = Array{Array{fmpq_mpoly,fmpq_mpoly}}(undef, 0)
+    y_eqs_replica = Array{Array{fmpq_mpoly,fmpq_mpoly}}(undef, 0)
+    u_vars_replica = Array{fmpq_mpoly}(undef, 0)
+    for i in 1:r 
+        x_eqs_replica = vcat(x_eqs_replica, [[AddToVar(x_vars[j], replica_ring, i), AddToVarsInReplica(x_eqs[j][2], mu, replica_ring, i)] for j in 1:length(x_eqs)]) 
+        y_eqs_replica = vcat(y_eqs_replica, [[AddToVar(y_vars[j], replica_ring, i), AddToVarsInReplica(y_eqs[j][2], mu, replica_ring, i)] for j in 1:length(y_eqs)])
+        u_vars_replica = vcat(u_vars_replica, [AddToVar(u_var, replica_ring, i) for u_var in u_vars])
+    end
+    return(x_eqs_replica, y_eqs_replica, u_vars_replica)
+end
+
 ############# Main Code
 
 function IdentifiabilityODE(x_eqs, y_eqs, u_vars, params_to_assess, p)
 
     println("Solving the problem")
-    println(Time(now()))
-
 # 1.Construct the maximal system
     
     # (a) ---------------
-    non_jet_ring = parent(x_eqs[1][1])
+    non_jet_ring_old = parent(x_eqs[1][1])
     x_vars = [xv[1] for xv in x_eqs]
     y_vars = [yv[1] for yv in y_eqs]
-
     println("Constructing the maximal system")
     
     all_vars   = vcat(x_vars, y_vars, u_vars)
@@ -314,19 +379,29 @@ function IdentifiabilityODE(x_eqs, y_eqs, u_vars, params_to_assess, p)
     
     #finding which ones are the parameters
     mu = setdiff(all_indets, all_vars)
+    all_indets = vcat(all_vars, mu)
+    
+
+    non_jet_ring, all_indets = Nemo.PolynomialRing(Nemo.QQ, ["$(s)" for s in all_indets])
+    
     p_local = p + length(params_to_assess) * 10^(-18)
 
     n = length(x_vars)
     m = length(y_vars)
     u = length(u_vars)
     s = length(mu) + n
-
+    x_vars = all_indets[1:n]
+    y_vars = all_indets[(n + 1):(n + m)]
+    u_vars = all_indets[(n + m + 1):(n + m + u)]
+    all_vars = all_indets[1:(n + m + u)]
+    mu = all_indets[(n + m + u + 1):end] 
+    
     Rjet = CreateJetRing(all_vars, mu, s+2)   
     gens_Rjet = gens(Rjet)
     z_aux = gens_Rjet[end-length(mu)] 
    
-    x_eqs = [[AddOneToVar(unpack_fraction(xeq[1])[1], Rjet), AddZeroToVars(unpack_fraction(xeq[2])[1], Rjet) // AddZeroToVars(unpack_fraction(xeq[2])[2], Rjet)] for xeq in x_eqs]
-    y_eqs = [[AddZeroToVar(unpack_fraction(yeq[1])[1], Rjet), AddZeroToVars(unpack_fraction(yeq[2])[1], Rjet) // AddZeroToVars(unpack_fraction(yeq[2])[2], Rjet)] for yeq in y_eqs]
+    x_eqs = [[AddToVar(unpack_fraction(xeq[1])[1], Rjet, 1), AddZeroToVars(unpack_fraction(xeq[2])[1], Rjet) // AddZeroToVars(unpack_fraction(xeq[2])[2], Rjet)] for xeq in x_eqs]
+    y_eqs = [[AddToVar(unpack_fraction(yeq[1])[1], Rjet, 0), AddZeroToVars(unpack_fraction(yeq[2])[1], Rjet) // AddZeroToVars(unpack_fraction(yeq[2])[2], Rjet)] for yeq in y_eqs]
 
     eqs = vcat(x_eqs, y_eqs)
     Q = foldl(lcm,[unpack_fraction(ex[2])[2] for ex in eqs])
@@ -424,7 +499,7 @@ function IdentifiabilityODE(x_eqs, y_eqs, u_vars, params_to_assess, p)
                         vars_to_add = Set{fmpq_mpoly}(v for v in vrs if !(v in x_theta_vars)) 
                         for v in vars_to_add
                             x_theta_vars = vcat(x_theta_vars, v)
-                            ord_var = GetOrderVar2(v, non_jet_ring,n + m + u, s)
+                            ord_var = GetOrderVar2(v, all_indets, n + m + u, s)
                             var_idx = var_index(ord_var[1])
                             poly = X[ var_idx ][ ord_var[2] ]
                             Et = vcat(Et, poly)
@@ -440,14 +515,13 @@ function IdentifiabilityODE(x_eqs, y_eqs, u_vars, params_to_assess, p)
         end 
     end
     
-    println(Time(now()))
     println("Assessing local identifiability")
 
     max_rank = length(Et)
     for i in 1:m
         for j in (beta[i] + 1):length(Y[i])
             to_add = true
-            for v in GetVars(Y[i][j], x_vars, n + m + u, s)
+            for v in GetVars(Y[i][j], x_vars, all_indets, n + m + u, s)
                 if !(v in x_theta_vars)
                     to_add = false
                 end
@@ -459,7 +533,7 @@ function IdentifiabilityODE(x_eqs, y_eqs, u_vars, params_to_assess, p)
         end
     end
     theta_l = Array{fmpq_mpoly}(undef,0)
-    params_to_assess = [AddZeroToVar(param,Rjet) for param in params_to_assess]
+    params_to_assess = [AddToVar(param, Rjet, 0) for param in params_to_assess]
     Et_eval_base = [evaluate(e, vcat(u_hat[1], y_hat[1]), vcat(u_hat[2], y_hat[2])) for e in Et]
     for param_0 in params_to_assess
         other_params = [v for v in x_theta_vars if v != param_0]
@@ -469,7 +543,6 @@ function IdentifiabilityODE(x_eqs, y_eqs, u_vars, params_to_assess, p)
             theta_l = vcat(theta_l, param_0)
         end
     end
-    println(Time(now()))
     
     if length(theta_l) == 0
         println("\n=== Summary ===")
@@ -477,7 +550,6 @@ function IdentifiabilityODE(x_eqs, y_eqs, u_vars, params_to_assess, p)
         println("Locally but not globally identifiable parameters: []")
         println("Not identifiable parameters:                      [", join(params_to_assess,", "), "]")
     else
-
         println("Locally identifiable parameters: [", join([GetOrderVar(th,non_jet_ring)[1] for th in theta_l],", "), "]")
         println("Not identifiable parameters:     [", join([GetOrderVar(th,non_jet_ring)[1] for th in setdiff(params_to_assess, theta_l)],", "), "]")
 
@@ -496,21 +568,18 @@ function IdentifiabilityODE(x_eqs, y_eqs, u_vars, params_to_assess, p)
         Et_hat = [evaluate(e, vcat(y_hat[1], u_hat[1]), vcat(y_hat[2], u_hat[2])) for e in Et]
         Et_x_vars = Set{fmpq_mpoly}()
         for poly in Et_hat
-            Et_x_vars = union(Et_x_vars, GetVars(poly, x_vars, n + m + u, s))
+            Et_x_vars = union(Et_x_vars, GetVars(poly, x_vars, all_indets, n + m + u, s))
         end
         Q_hat = evaluate(Q, u_hat[1], u_hat[2])
-        vrs_sorted = vcat(sort([e for e in Et_x_vars], lt = (x, y) -> CompareDiffVar(x, y, non_jet_ring, n + m + u, s)), z_aux, sort(not_int_cond_params, rev=true))
-    
+        vrs_sorted = vcat(sort([e for e in Et_x_vars], lt = (x, y) -> CompareDiffVar(x, y, all_indets, n + m + u, s)), z_aux, sort(not_int_cond_params, rev=true))
 # 4. Determine.
-        println(Time(now()))
         println("GB computation")  
     
         Rjet_new, vrs_sorted = Singular.PolynomialRing(Singular.QQ, [string(v) for v in vrs_sorted], ordering=:degrevlex)
         theta_g = Array{spoly}(undef, 0)  
     
         Et_hat = [parent_ring_change(e, Rjet_new) for e in Et_hat]
-        gb = GroebnerBasis.f4(Ideal(Rjet_new,vcat(Et_hat, parent_ring_change(z_aux * Q_hat, Rjet_new) - 1)), nthrds=64)
-        println(Time(now())) 
+        gb = GroebnerBasis.f4(Ideal(Rjet_new, vcat(Et_hat, parent_ring_change(z_aux * Q_hat, Rjet_new) - 1)), nthrds=64)
         println("Remainder computation")
         theta_l_new = [parent_ring_change(th, Rjet_new) for th in theta_l]
     
@@ -520,7 +589,6 @@ function IdentifiabilityODE(x_eqs, y_eqs, u_vars, params_to_assess, p)
                 theta_g = vcat(theta_g, theta_l_new[i])
             end
         end
-        println(Time(now()))
         println("\n=== Summary ===")
         println("Globally identifiable parameters:                 [", join([GetOrderVar(th,non_jet_ring)[1] for th in theta_g],", "), "]")
         println("Locally but not globally identifiable parameters: [", join([GetOrderVar(th,non_jet_ring)[1] for th in setdiff(theta_l_new,theta_g)],", "), "]")
