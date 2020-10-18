@@ -134,13 +134,9 @@ end
 
 function GetOrderVar2(diff_var, non_jet_vars, shft, s) 
     idx = var_index(diff_var)
-#    println(diff_var)
     if idx <= shft * (s + 3)
-#        println([non_jet_vars[rem(idx - 1, shft) + 1], div(idx - 1, shft)])
-#        println()
         return([non_jet_vars[rem(idx - 1, shft) + 1], div(idx - 1, shft)])
     else
-#        println([non_jet_vars[idx - shft*(s + 2) - 1], 0]) 
         return([non_jet_vars[idx - shft*(s + 2) - 1], 0])
     end
 end
@@ -192,9 +188,6 @@ function parent_ring_change(poly::MPolyElem, new_ring::MPolyRing)
     # construct a mapping for the variable indices
     var_mapping = Array{Any, 1}()
     
-#    println(poly)
-#    println(symbols(new_ring))    
-#    println()
     for u in symbols(old_ring)
         push!(
             var_mapping,
@@ -269,7 +262,7 @@ end
 
 #############
 
-function GetParameters(x_eqs, y_eqs, u_vars)
+function GetParameters(x_eqs, y_eqs, u_vars; initial_conditions = true)
     x_vars = [xv[1] for xv in x_eqs]
     y_vars = [yv[1] for yv in y_eqs]
     all_vars = vcat(x_vars, y_vars, u_vars)
@@ -284,7 +277,11 @@ function GetParameters(x_eqs, y_eqs, u_vars)
     end
 
     #finding which ones are the parameters
-    return vcat(setdiff(all_indets, all_vars), x_vars)
+    if initial_conditions
+        return vcat(setdiff(all_indets, all_vars), x_vars)
+    else
+        return setdiff(all_indets, all_vars)
+    end 
 end
 
 function VarToSymb(gn)
@@ -304,18 +301,20 @@ function AddToVarsInReplica(poly::MPolyElem, mu, new_ring::MPolyRing, r)
     # construct a mapping for the variable indices
     var_mapping = Array{Any, 1}()
     mu_symbols = [VarToSymb(m) for m in mu]
-    for u in setdiff(symbols(old_ring), mu_symbols)
-        push!(
-            var_mapping,
-            findfirst(v -> (string(u,"_",r) == string(v)), symbols(new_ring))
-        )
-    end
-    for u in mu_symbols
-        push!(
-            var_mapping,
-            findfirst(v -> (string(u) == string(v)), symbols(new_ring))
-        )
-    end
+
+    for u in symbols(old_ring)
+        if u in mu_symbols
+            push!(
+                var_mapping,
+                findfirst(v -> (string(u) == string(v)), symbols(new_ring))
+            )
+        else
+            push!(
+                var_mapping,
+                findfirst(v -> (string(u,"_",r) == string(v)), symbols(new_ring))
+            )
+        end
+    end 
     builder = MPolyBuildCtx(new_ring)
     for term in zip(exponent_vectors(poly), coeffs(poly))
         exp, coef = term
