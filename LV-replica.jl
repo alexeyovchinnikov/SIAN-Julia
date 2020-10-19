@@ -17,8 +17,8 @@ sigma_y = [
 
 r=3
 
-sigma_x_r, sigma_y_r, u_vars_r = GenerateReplica(sigma_x, sigma_y, [u,v], r)
+sigma_x_r, sigma_y_r, u_vars_r = generate_replica(sigma_x, sigma_y, [u,v], r)
 
-IdentifiabilityODE(sigma_x_r, sigma_y_r, u_vars_r, GetParameters(sigma_x_r, sigma_y_r, u_vars_r), prob)
+identifiability_ode(sigma_x_r, sigma_y_r, u_vars_r, get_parameters(sigma_x_r, sigma_y_r, u_vars_r), prob)
 
 
