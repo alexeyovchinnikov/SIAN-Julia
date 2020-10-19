@@ -16,6 +16,6 @@ sigma_y = [
             [y2, x4]
           ]
 
-IdentifiabilityODE(sigma_x, sigma_y,  [], GetParameters(sigma_x, sigma_y, []), prob)
+identifiability_ode(sigma_x, sigma_y,  [], get_parameters(sigma_x, sigma_y, []), prob)
 
 
