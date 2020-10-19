@@ -4,7 +4,7 @@ println("Setting up the problem")
 
 prob=0.99
 
-R, (x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15,y1,y2,y3,y4,y5,y6,u,c5, c_3a, c_4a, e_2a, i1, i_1a, k1, k2, k3, k_deg, k_prod, t1, t2, a1,a2,a3,c_1a,c_2a,c_5a,c_6a,c1,c2,c3,c4,kv,e_1a,c_1c,c_2c,c_3c) = Nemo.PolynomialRing(Nemo.QQ, ["x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15","y1","y2","y3","y4","y5","y6","u","c5", "c_3a", "c_4a", "e_2a", "i1", "i_1a", "k1", "k2", "k3", "k_deg", "k_prod", "t1", "t2","a1","a2","a3","c_1a","c_2a","c_5a","c_6a","c1","c2","c3","c4","kv","e_1a","c_1c","c_2c","c_3c"], ordering=:degrevlex)
+R, (x1, x2, x3, x4, x5, x6, x7, x9, x10, x11, x12, x13, x14, x15,y1,y2,y3,y4,y5,x8,y6,u,c5, c_3a, c_4a, e_2a, i1, i_1a, k1, k2, k3, k_deg, k_prod, t1, t2, a1,a2,a3,c_1a,c_2a,c_5a,c_6a,c1,c2,c3,c4,kv,e_1a,c_1c,c_2c,c_3c) = Nemo.PolynomialRing(Nemo.QQ, ["x1", "x2", "x3", "x4", "x5", "x6", "x7", "x9", "x10", "x11", "x12", "x13", "x14", "x15","y1","y2","y3","y4","y5","x8","y6","u","c5", "c_3a", "c_4a", "e_2a", "i1", "i_1a", "k1", "k2", "k3", "k_deg", "k_prod", "t1", "t2","a1","a2","a3","c_1a","c_2a","c_5a","c_6a","c1","c2","c3","c4","kv","e_1a","c_1c","c_2c","c_3c"], ordering=:degrevlex)
 
 
 # a1 = R(1 // 2)
@@ -51,5 +51,5 @@ sigma_y= [
   [y5, x7]
 ]
 
-IdentifiabilityODE(sigma_x, sigma_y,  [u], GetParameters(sigma_x, sigma_y, [u]), prob)
+identifiability_ode(sigma_x, sigma_y,  [u], get_parameters(sigma_x, sigma_y, [u]), prob)
 
