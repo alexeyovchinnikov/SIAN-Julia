@@ -15,6 +15,21 @@ sigma_y = [
             [y1, x1+u+v]
           ]
 
+r=3
+
+sigma_x_replica, sigma_y_replica, u_vars_replica = GenerateReplica(sigma_x, sigma_y,  [u,v], r)
+
+for i in 1:r*length(sigma_x)
+   println(sigma_x_replica[i])
+end
+
+for i in 1:r*length(sigma_y)             
+   println(sigma_y_replica[i])
+end
+
+println(u_vars_replica)
+
+
 IdentifiabilityODE(sigma_x, sigma_y,  [u,v], GetParameters(sigma_x, sigma_y, [u,v]), prob)
 
 
