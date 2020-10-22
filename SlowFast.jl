@@ -1,8 +1,6 @@
-println("Setting up the problem")
-
 include("IdentifiabilityODE.jl")
 
-prob=0.99
+println("Setting up the problem")
 
 R, (xA, xB, xC, eA, eB, eC, y1, y2, y3, y4, k1, k2) = Nemo.PolynomialRing(Nemo.QQ, ["xA", "xB", "xC", "eA", "eB", "eC", "y1", "y2", "y3", "y4", "k1", "k2"])
 
@@ -20,7 +18,7 @@ sigma_y = [
             [y4, eC]
           ]
 
-identifiability_ode(sigma_x, sigma_y, [], get_parameters(sigma_x, sigma_y, []), prob);
+identifiability_ode(sigma_x, sigma_y, [], get_parameters(sigma_x, sigma_y, []); p = 0.99, p_mod = 2^29 - 3, nthrds = 64)
 
 # The following computation shows that one can identify more from two experiments
 # GenerateReplica(sigma, 2) generates a system consiting of two copies of sigma
@@ -30,6 +28,6 @@ r=2
 
 sigma_x_r, sigma_y_r, u_vars_r = generate_replica(sigma_x, sigma_y, [], r)
 
-identifiability_ode(sigma_x_r, sigma_y_r, u_vars_r, get_parameters(sigma_x_r, sigma_y_r, u_vars_r; initial_conditions = false), prob)
+identifiability_ode(sigma_x_r, sigma_y_r, u_vars_r, get_parameters(sigma_x_r, sigma_y_r, u_vars_r; initial_conditions = false); p = 0.99, p_mod = 2^29 - 3, nthrds = 64)
 
 
