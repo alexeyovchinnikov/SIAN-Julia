@@ -13,19 +13,13 @@ function _reduce_poly_mod_p(poly::MPolyElem{Nemo.fmpq}, p::Int)
     """
     den = denominator(poly)
     num = change_base_ring(Nemo.ZZ, den * poly)
-    if GF(p)(den) == 0
+    if Nemo.GF(p)(den) == 0
         throw(Base.ArgumentError("Prime $p divides the denominator of $poly"))
     end
-    return change_base_ring(Fp(p), num) * (1 // Fp(p)(den))
+    return change_base_ring(Nemo.GF(p), num) * (1 // Nemo.GF(p)(den))
 end
 
 ##################
-
-function str_to_var2(s, ring)
-    gns = gens(ring)
-    return gns[findfirst(v -> (string(v) == s), gns)]
-end
-
 
 function str_to_var(s, ring::MPolyRing)
     ind = findfirst(v -> (string(v) == s), symbols(ring))
@@ -354,7 +348,7 @@ end
 
 ############# Main Code
 
-function identifiability_ode(x_eqs, y_eqs, u_vars, params_to_assess, p)
+function identifiability_ode(x_eqs, y_eqs, u_vars, params_to_assess; p = 0.99, p_mod = 0, nthrds = 64)
 
     println("Solving the problem")
 # 1.Construct the maximal system
@@ -573,27 +567,32 @@ function identifiability_ode(x_eqs, y_eqs, u_vars, params_to_assess, p)
         vrs_sorted = vcat(sort([e for e in Et_x_vars], lt = (x, y) -> compare_diff_var(x, y, all_indets, n + m + u, s)), z_aux, sort(not_int_cond_params, rev=true))
 # 4. Determine.
         println("GB computation")  
-    
-        Rjet_new, vrs_sorted = Singular.PolynomialRing(Singular.QQ, [string(v) for v in vrs_sorted], ordering=:degrevlex)
+        
+        if p_mod > 0 
+            Et_hat = [_reduce_poly_mod_p(e, p_mod) for e in Et_hat]
+            z_aux = _reduce_poly_mod_p(z_aux, p_mod)
+            Q_hat = _reduce_poly_mod_p(Q_hat, p_mod)
+            Rjet_new, vrs_sorted = Singular.PolynomialRing(Singular.Fp(p_mod), [string(v) for v in vrs_sorted], ordering=:degrevlex)
+        else 
+            Rjet_new, vrs_sorted = Singular.PolynomialRing(Singular.QQ, [string(v) for v in vrs_sorted], ordering=:degrevlex)
+        end
+
         theta_g = Array{spoly}(undef, 0)  
     
         Et_hat = [parent_ring_change(e, Rjet_new) for e in Et_hat]
-        gb = GroebnerBasis.f4(Ideal(Rjet_new, vcat(Et_hat, parent_ring_change(z_aux * Q_hat, Rjet_new) - 1)), nthrds=64)
+        gb = GroebnerBasis.f4(Ideal(Rjet_new, vcat(Et_hat, parent_ring_change(z_aux * Q_hat, Rjet_new) - 1)), nthrds = nthrds)
         println("Remainder computation")
-        theta_l_new = [parent_ring_change(th, Rjet_new) for th in theta_l]
+        theta_l_new = [parent_ring_change(_reduce_poly_mod_p(th, p_mod), Rjet_new) for th in theta_l]
     
-        theta = [parent_ring_change(th, Rjet_new) for th in params_to_assess]
         for i in 1:length(theta_l)
-            if Singular.reduce(theta_l_new[i], gb) == Rjet_new(theta_hat[2][findfirst(isequal(theta_l[i]), theta_hat[1])]) 
+            if Singular.reduce(theta_l_new[i], gb) == parent_ring_change(_reduce_poly_mod_p(Rjet(theta_hat[2][findfirst(isequal(theta_l[i]), theta_hat[1])]),p_mod), Rjet_new) 
                 theta_g = vcat(theta_g, theta_l_new[i])
             end
         end
         println("\n=== Summary ===")
         println("Globally identifiable parameters:                 [", join([get_order_var(th,non_jet_ring)[1] for th in theta_g],", "), "]")
         println("Locally but not globally identifiable parameters: [", join([get_order_var(th,non_jet_ring)[1] for th in setdiff(theta_l_new,theta_g)],", "), "]")
-        println("Not identifiable parameters:                      [", join([get_order_var(th,non_jet_ring)[1] for th in setdiff(theta, theta_l_new)],", "), "]")
+        println("Not identifiable parameters:                      [", join([get_order_var(th,non_jet_ring)[1] for th in setdiff(params_to_assess, theta_l)],", "), "]")
         println("===============")
     end
 end
-
-
