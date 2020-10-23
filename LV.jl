@@ -12,6 +12,6 @@ sigma_y = [
             [y1, x1 + u + v]
           ]
 
-identifiability_ode(sigma_x, sigma_y,  [u, v], get_parameters(sigma_x, sigma_y, [u,v]); p = 0.99, p_mod = 2^29 - 3, nthrds = 64)
+identifiability_ode(sigma_x, sigma_y,  [u, v], get_parameters(sigma_x, sigma_y, [u,v]); p = 0.99, p_mod = 0, nthrds = 64)
 
 

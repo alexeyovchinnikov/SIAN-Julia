@@ -3,7 +3,6 @@ using Oscar
 using LinearAlgebra
 using Singular
 using GroebnerBasis
-using Dates
 
 ##################
 
@@ -261,7 +260,7 @@ function get_parameters(x_eqs, y_eqs, u_vars; initial_conditions = true)
     y_vars = [yv[1] for yv in y_eqs]
     all_vars = vcat(x_vars, y_vars, u_vars)
     
-    all_indets = vars(x_eqs[1][2])
+    all_indets = union(vars(unpack_fraction(x_eqs[1][2])[1]), vars(unpack_fraction(x_eqs[1][2])[2]))
     for i in 2:length(x_eqs)
         all_indets = union(all_indets, vars(unpack_fraction(x_eqs[i][2])[1]), vars(unpack_fraction(x_eqs[i][2])[2]))
     end
@@ -362,7 +361,7 @@ function identifiability_ode(x_eqs, y_eqs, u_vars, params_to_assess; p = 0.99, p
     all_vars   = vcat(x_vars, y_vars, u_vars)
     
     #computing all symbols in the equations
-    all_indets = vars(x_eqs[1][2])
+    all_indets = union(vars(unpack_fraction(x_eqs[1][2])[1]), vars(unpack_fraction(x_eqs[1][2])[2]))
     for i in 2:length(x_eqs)
         all_indets = union(all_indets, vars(unpack_fraction(x_eqs[i][2])[1]), vars(unpack_fraction(x_eqs[i][2])[2]))
     end
@@ -567,6 +566,7 @@ function identifiability_ode(x_eqs, y_eqs, u_vars, params_to_assess; p = 0.99, p
         vrs_sorted = vcat(sort([e for e in Et_x_vars], lt = (x, y) -> compare_diff_var(x, y, all_indets, n + m + u, s)), z_aux, sort(not_int_cond_params, rev=true))
 # 4. Determine.
         println("GB computation")  
+
         
         if p_mod > 0 
             Et_hat = [_reduce_poly_mod_p(e, p_mod) for e in Et_hat]
@@ -577,17 +577,28 @@ function identifiability_ode(x_eqs, y_eqs, u_vars, params_to_assess; p = 0.99, p
             Rjet_new, vrs_sorted = Singular.PolynomialRing(Singular.QQ, [string(v) for v in vrs_sorted], ordering=:degrevlex)
         end
 
-        theta_g = Array{spoly}(undef, 0)  
-    
+        theta_g = Array{spoly}(undef, 0)    
         Et_hat = [parent_ring_change(e, Rjet_new) for e in Et_hat]
         gb = GroebnerBasis.f4(Ideal(Rjet_new, vcat(Et_hat, parent_ring_change(z_aux * Q_hat, Rjet_new) - 1)), nthrds = nthrds)
         println("Remainder computation")
-        theta_l_new = [parent_ring_change(_reduce_poly_mod_p(th, p_mod), Rjet_new) for th in theta_l]
+        
+        if p_mod > 0
+            theta_l_new = [parent_ring_change(_reduce_poly_mod_p(th, p_mod), Rjet_new) for th in theta_l]
     
-        for i in 1:length(theta_l)
-            if Singular.reduce(theta_l_new[i], gb) == parent_ring_change(_reduce_poly_mod_p(Rjet(theta_hat[2][findfirst(isequal(theta_l[i]), theta_hat[1])]),p_mod), Rjet_new) 
-                theta_g = vcat(theta_g, theta_l_new[i])
+            for i in 1:length(theta_l)
+                if Singular.reduce(theta_l_new[i], gb) == parent_ring_change(_reduce_poly_mod_p(Rjet(theta_hat[2][findfirst(isequal(theta_l[i]), theta_hat[1])]),p_mod), Rjet_new) 
+                    theta_g = vcat(theta_g, theta_l_new[i])
+                end
             end
+        else
+           theta_l_new = [parent_ring_change(th, Rjet_new) for th in theta_l]
+
+            for i in 1:length(theta_l)
+                if Singular.reduce(theta_l_new[i], gb) == parent_ring_change(Rjet(theta_hat[2][findfirst(isequal(theta_l[i]), theta_hat[1])]), Rjet_new)
+                    theta_g = vcat(theta_g, theta_l_new[i])
+                end
+            end
+
         end
         println("\n=== Summary ===")
         println("Globally identifiable parameters:                 [", join([get_order_var(th,non_jet_ring)[1] for th in theta_g],", "), "]")
