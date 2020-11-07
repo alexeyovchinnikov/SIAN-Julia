@@ -1,4 +1,4 @@
-include("IdentifiabilityODE.jl")
+include("../IdentifiabilityODE.jl")
 
 println("Setting up the problem")
 
