@@ -31,22 +31,37 @@ If an ODE model has been entered with parameters for some of which it is desirab
 
 OrderedDict(
     a1 => Nemo.QQ(1, 2),
+    
     a2 => Nemo.QQ(1, 5),
+    
     a3 => Nemo.QQ(1),
+    
     c_1a => Nemo.QQ(5, 10^(7)),
+    
     c_2a => Nemo.QQ(0),
+    
     c_5a => Nemo.QQ(1, 10^(4)),
+    
     c_6a => Nemo.QQ(2, 10^(5)),
+    
     c1 => Nemo.QQ(5, 10^(7)),
+    
     c2 => Nemo.QQ(0),
+    
     c3 => Nemo.QQ(4, 10^(4)),
+    
     c4 => Nemo.QQ(1, 2),
+    
     kv => Nemo.QQ(5),
+    
     e_1a => Nemo.QQ(5, 10^(4)),
+    
     c_1c => Nemo.QQ(5, 10^(7)),
+    
     c_2c => Nemo.QQ(0),
+    
     c_3c => Nemo.QQ(4, 10^(4))
+
 )
 
 for instance, to specify that a1 is 1/2, etc.
-
