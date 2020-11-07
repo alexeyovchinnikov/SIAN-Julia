@@ -23,3 +23,30 @@ and returns the r-fold replica of the ODE model (the state, output, and input va
 The folder "examples" contains examples of using this.
 
 The folder "without-macros" contains an earlier version on this implementation that did not use the macros.
+
+If an ODE model has been entered with parameters for some of which it is desirable to further specify their values, this can be done using the "SetParameterValues" function, which inputs:
+
+1) an ODE model (created by the @ODEmodel macros)
+2) a dictionary (or odered dictionary) of values such as (taken from the NFkB.jl example)
+
+OrderedDict(
+    a1 => Nemo.QQ(1, 2),
+    a2 => Nemo.QQ(1, 5),
+    a3 => Nemo.QQ(1),
+    c_1a => Nemo.QQ(5, 10^(7)),
+    c_2a => Nemo.QQ(0),
+    c_5a => Nemo.QQ(1, 10^(4)),
+    c_6a => Nemo.QQ(2, 10^(5)),
+    c1 => Nemo.QQ(5, 10^(7)),
+    c2 => Nemo.QQ(0),
+    c3 => Nemo.QQ(4, 10^(4)),
+    c4 => Nemo.QQ(1, 2),
+    kv => Nemo.QQ(5),
+    e_1a => Nemo.QQ(5, 10^(4)),
+    c_1c => Nemo.QQ(5, 10^(7)),
+    c_2c => Nemo.QQ(0),
+    c_3c => Nemo.QQ(4, 10^(4))
+)
+
+for instance, to specify that a1 is 1/2, etc.
+
