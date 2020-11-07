@@ -19,3 +19,7 @@ The function "generate_replica" has two required arguments:
 2) an integer "r"
 
 and returns the r-fold replica of the ODE model (the state, output, and input variables are replicated and the parameters are not replicated). This function can be used to check the r-experiment identifiability of the parameters.
+
+The folder "examples" contains examples of using this.
+
+The folder "without-macros" contains an earlier version on this implementation that did not use the macros.
