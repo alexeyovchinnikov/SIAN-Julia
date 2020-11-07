@@ -30,10 +30,8 @@ If an ODE model has been entered with parameters for some of which it is desirab
 2) a dictionary (or odered dictionary) of values such as (taken from the NFkB.jl example)
 
 OrderedDict(
-    a1 => Nemo.QQ(1, 2),
-    
+    a1 => Nemo.QQ(1, 2),   
     a2 => Nemo.QQ(1, 5),
-    
     a3 => Nemo.QQ(1),
     
     c_1a => Nemo.QQ(5, 10^(7)),
