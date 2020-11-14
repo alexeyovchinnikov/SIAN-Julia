@@ -10,17 +10,17 @@ using OrderedCollections
 
 struct ODE{P}
     poly_ring::MPolyRing
-    x_vars::Array{P, 1}
-    y_vars::Array{P, 1}
-    u_vars::Array{P, 1}
-    parameters::Array{P, 1}
-    x_equations::OrderedDict{P, <: Union{P, Generic.Frac{P}}}
-    y_equations::OrderedDict{P, <: Union{P, Generic.Frac{P}}}
+    x_vars::Array{P,1}
+    y_vars::Array{P,1}
+    u_vars::Array{P,1}
+    parameters::Array{P,1}
+    x_equations::OrderedDict{P,<: Union{P,Generic.Frac{P}}}
+    y_equations::OrderedDict{P,<: Union{P,Generic.Frac{P}}}
     
     function ODE{P}(
-            x_eqs::OrderedDict{P, <: Union{P, Generic.Frac{P}}}, 
-            y_eqs::OrderedDict{P, <: Union{P, Generic.Frac{P}}},    
-            inputs::Array{P, 1}
+            x_eqs::OrderedDict{P,<: Union{P,Generic.Frac{P}}}, 
+            y_eqs::OrderedDict{P,<: Union{P,Generic.Frac{P}}},    
+            inputs::Array{P,1}
         ) where {P <: MPolyElem{<: FieldElem}}
         # Initialize ODE
         # x_eqs is a dictionary x_i => f_i(x, u, params)
@@ -36,7 +36,7 @@ struct ODE{P}
     end
 end
 
-function eval_at_dict(poly::P, d::OrderedDict{P, <: RingElem}) where P <: MPolyElem
+function eval_at_dict(poly::P, d::OrderedDict{P,<: RingElem}) where P <: MPolyElem
     """
     Evaluates a polynomial on a dict var => val
     missing values are replaced with zeroes
@@ -46,7 +46,7 @@ function eval_at_dict(poly::P, d::OrderedDict{P, <: RingElem}) where P <: MPolyE
 end
 
 
-function SetParameterValues(ode::ODE{P}, param_values::OrderedDict{P, T}) where {T <: FieldElem, P <: MPolyElem{T}}
+function SetParameterValues(ode::ODE{P}, param_values::OrderedDict{P,T}) where {T <: FieldElem,P <: MPolyElem{T}}
     """
     Input:
         - ode, an ODE as above
@@ -59,8 +59,8 @@ function SetParameterValues(ode::ODE{P}, param_values::OrderedDict{P, T}) where 
     merge!(eval_dict, OrderedDict(p => small_ring(val) for (p, val) in param_values))
 
     return ODE{P}(
-        OrderedDict{P, Union{P, Generic.Frac{P}}}(eval_at_dict(v, eval_dict) => eval_at_dict(f, eval_dict) for (v, f) in ode.x_equations),
-         OrderedDict{P, Union{P, Generic.Frac{P}}}(eval_at_dict(v, eval_dict) => eval_at_dict(f, eval_dict) for (v, f) in ode.y_equations),
+        OrderedDict{P,Union{P,Generic.Frac{P}}}(eval_at_dict(v, eval_dict) => eval_at_dict(f, eval_dict) for (v, f) in ode.x_equations),
+        OrderedDict{P,Union{P,Generic.Frac{P}}}(eval_at_dict(v, eval_dict) => eval_at_dict(f, eval_dict) for (v, f) in ode.y_equations),
         [eval_at_dict(u, eval_dict) for u in ode.u_vars]
     )
 end
@@ -87,7 +87,7 @@ function str_to_var(s, ring::MPolyRing)
 end
 
 
-function eval_at_dict(poly::P, d::OrderedDict{P, <: RingElem}) where P <: MPolyElem
+function eval_at_dict(poly::P, d::OrderedDict{P,<: RingElem}) where P <: MPolyElem
     """
     Evaluates a polynomial on a dict var => val
     missing values are replaced with zeroes
@@ -104,7 +104,7 @@ function unpack_fraction(f::Generic.Frac{<: MPolyElem})
     return (numerator(f), denominator(f))
 end
 
-function print_for_SIAN(ode::ODE{P}, outputs::Array{P, 1}) where P <: MPolyElem{<: FieldElem}
+function print_for_SIAN(ode::ODE{P}, outputs::Array{P,1}) where P <: MPolyElem{<: FieldElem}
     """
     Prints the ODE in the format accepted by SIAN (https://github.com/pogudingleb/SIAN)
     """
@@ -117,7 +117,7 @@ function print_for_SIAN(ode::ODE{P}, outputs::Array{P, 1}) where P <: MPolyElem{
         num, den = unpack_fraction(lhs)
         result = string(evaluate(num, vars_print))
         if den != 1
-             result = "($result) / ($(evaluate(den, vars_print)))"
+            result = "($result) / ($(evaluate(den, vars_print)))"
         end
         return result
     end
@@ -131,22 +131,22 @@ function print_for_SIAN(ode::ODE{P}, outputs::Array{P, 1}) where P <: MPolyElem{
     return result
 end
 
-function macrohelper_extract_vars(equations::Array{Expr, 1})
+function macrohelper_extract_vars(equations::Array{Expr,1})
     funcs, x_vars, all_symb = Array{Any}(undef, 0), Array{Any}(undef, 0), Array{Any}(undef, 0)
     aux_symb = Set([:(+), :(-), :(=), :(*), :(^), :t, :(/), :(//)])
     for eq in equations
         MacroTools.postwalk(
             x -> begin 
-                if @capture(x, f_'(t)) 
-                    push!(x_vars, f)
-                    push!(all_symb, f)
-                elseif @capture(x, f_(t))
-                    push!(funcs, f)
-                elseif (x isa Symbol) && !(x in aux_symb)
-                    push!(all_symb, x)
-                end
-                return x
-            end, 
+            if @capture(x, f_'(t)) 
+                push!(x_vars, f)
+                push!(all_symb, f)
+            elseif @capture(x, f_(t))
+                push!(funcs, f)
+            elseif (x isa Symbol) && !(x in aux_symb)
+                push!(all_symb, x)
+            end
+            return x
+        end, 
             eq
         )
     end
@@ -154,7 +154,7 @@ function macrohelper_extract_vars(equations::Array{Expr, 1})
     all_symb = vcat(x_vars, io_vars, setdiff(all_symb, funcs))
     return x_vars, io_vars, all_symb
 end
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 
 function macrohelper_clean(ex::Expr)
@@ -163,7 +163,7 @@ function macrohelper_clean(ex::Expr)
     ex = MacroTools.postwalk(x -> x == :(/) ? :(//) : x, ex)
     return ex
 end
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 macro ODEmodel(ex::Expr...)
     """
@@ -185,8 +185,8 @@ macro ODEmodel(ex::Expr...)
     x_dict = gensym()
     y_dict = gensym()
     y_vars = Array{Any}(undef, 0)
-    x_dict_create_expr = :($x_dict = OrderedDict{fmpq_mpoly, Union{fmpq_mpoly, Generic.Frac{fmpq_mpoly}}}())
-    y_dict_create_expr = :($y_dict = OrderedDict{fmpq_mpoly, Union{fmpq_mpoly, Generic.Frac{fmpq_mpoly}}}())
+    x_dict_create_expr = :($x_dict = OrderedDict{fmpq_mpoly,Union{fmpq_mpoly,Generic.Frac{fmpq_mpoly}}}())
+    y_dict_create_expr = :($y_dict = OrderedDict{fmpq_mpoly,Union{fmpq_mpoly,Generic.Frac{fmpq_mpoly}}}())
     eqs_expr = []
     for eq in equations
         if eq.head != :(=)
@@ -236,15 +236,15 @@ function generate_replica(ode::ODE{P}, r::Int) where P <: MPolyElem
     States, outputs, and inputs are replicated, parameters are not
     """
     new_varnames = Array{String}(undef, 0)
-    #new_varnames = map(string, ode.parameters)
+    # new_varnames = map(string, ode.parameters)
     for v in vcat(ode.x_vars, ode.y_vars, ode.u_vars)
         append!(new_varnames, [var_to_str(v) * "_r$i" for i in 1:r])
     end
     append!(new_varnames, map(string, ode.parameters))
     new_ring, new_vars = Nemo.PolynomialRing(base_ring(ode.poly_ring), new_varnames)
-    new_x_eqs = OrderedDict{P, Union{P, Generic.Frac{P}}}()
-    new_y_eqs = OrderedDict{P, Union{P, Generic.Frac{P}}}()
-    new_us = Array{P, 1}()
+    new_x_eqs = OrderedDict{P,Union{P,Generic.Frac{P}}}()
+    new_y_eqs = OrderedDict{P,Union{P,Generic.Frac{P}}}()
+    new_us = Array{P,1}()
     for i in 1:r
         eval = merge(
             OrderedDict(v => str_to_var(var_to_str(v) * "_r$i", new_ring) for v in vcat(ode.x_vars, ode.y_vars, ode.u_vars)),
@@ -253,11 +253,11 @@ function generate_replica(ode::ODE{P}, r::Int) where P <: MPolyElem
         eval_vec = [eval[v] for v in gens(ode.poly_ring)]
         new_x_eqs = merge(
             new_x_eqs, 
-            OrderedDict{P, Union{P, Generic.Frac{P}}}(evaluate(x, eval_vec) => evaluate(f, eval_vec) for (x, f) in ode.x_equations)
+            OrderedDict{P,Union{P,Generic.Frac{P}}}(evaluate(x, eval_vec) => evaluate(f, eval_vec) for (x, f) in ode.x_equations)
         )
         new_y_eqs = merge(
             new_y_eqs,
-            OrderedDict{P, Union{P, Generic.Frac{P}}}(evaluate(x, eval_vec) => evaluate(f, eval_vec) for (x, f) in ode.y_equations)
+            OrderedDict{P,Union{P,Generic.Frac{P}}}(evaluate(x, eval_vec) => evaluate(f, eval_vec) for (x, f) in ode.y_equations)
         )
         append!(new_us, [str_to_var(var_to_str(u) * "_r$i", new_ring) for u in ode.u_vars])
     end
@@ -302,25 +302,25 @@ end
 function differentiate_all(diff_poly, var_list, shft, max_ord)
     result = 0
     for i in 1:(shft * (max_ord + 1))
-        result = result + derivative(diff_poly, var_list[i]) * var_list[i+shft]
+        result = result + derivative(diff_poly, var_list[i]) * var_list[i + shft]
     end
     return(result)
 end
 
 ##################
 
-#function unpack_fraction(f)
+# function unpack_fraction(f)
 #    if applicable(numerator, f)
 #        return (numerator(f), denominator(f))
 #    end
 #    return (f, parent(f)(1))
-#end
+# end
 
 ##################
 
 function eval_frac(frac, vars, vals)
     fr = unpack_fraction(frac)
-    return(evaluate(fr[1], vars, vals)//evaluate(fr[2], vars, vals))
+    return(evaluate(fr[1], vars, vals) // evaluate(fr[2], vars, vals))
 end
 
 ###################
@@ -346,7 +346,7 @@ function sample_point(bound, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq
                 vl = evaluate(unpack_fraction(eq)[1], vls) // evaluate(unpack_fraction(eq)[2], vls)
                 y_hat_vars = vcat(y_hat_vars, Y_eq[(j - 1) * (s + 2) + i + 1][1])
                 y_hat_vals = vcat(y_hat_vals, vl)
-                vls[var_index(Y_eq[(j - 1)*(s + 2) + i + 1][1])] = vl
+                vls[var_index(Y_eq[(j - 1) * (s + 2) + i + 1][1])] = vl
                 all_subs = [vcat(all_subs[1], Y_eq[(j - 1) * (s + 2) + i + 1][1]), vcat(all_subs[2], vl)]
             end
             for j in 1:length(x_vars)
@@ -380,7 +380,7 @@ function get_order_var2(diff_var, non_jet_vars, shft, s)
     if idx <= shft * (s + 3)
         return([non_jet_vars[rem(idx - 1, shft) + 1], div(idx - 1, shft)])
     else
-        return([non_jet_vars[idx - shft*(s + 2) - 1], 0])
+        return([non_jet_vars[idx - shft * (s + 2) - 1], 0])
     end
 end
 
@@ -391,7 +391,7 @@ function get_order_var(diff_var, non_jet_ring)
     if rex === nothing
         return(["", ""])
     else
-        return([str_to_var(first(rex[1], length(rex[1])-1), non_jet_ring), parse(Int, rex[2])])
+        return([str_to_var(first(rex[1], length(rex[1]) - 1), non_jet_ring), parse(Int, rex[2])])
     end
 end
 
@@ -408,7 +408,7 @@ function compare_diff_var(dvl, dvr, non_jet_vars, shft, s)
     vl, hl = get_order_var2(dvl, non_jet_vars, shft, s)
     vr, hr = get_order_var2(dvr, non_jet_vars, shft, s)
     if hl != hr
-       return (hl > hr)
+        return (hl > hr)
     end
     if length(string(vl)) != length(string(vr))
         return (length(string(vl)) > length(string(vr)))
@@ -429,7 +429,7 @@ function parent_ring_change(poly::MPolyElem, new_ring::MPolyRing)
     """
     old_ring = parent(poly)
     # construct a mapping for the variable indices
-    var_mapping = Array{Any, 1}()
+    var_mapping = Array{Any,1}()
     
     for u in symbols(old_ring)
         push!(
@@ -478,11 +478,11 @@ function add_zero_to_vars(poly::MPolyElem, new_ring::MPolyRing)
     """
     old_ring = parent(poly)
     # construct a mapping for the variable indices
-    var_mapping = Array{Any, 1}()
+    var_mapping = Array{Any,1}()
     for u in symbols(old_ring)
         push!(
             var_mapping,
-            findfirst(v -> (string(u,"_0") == string(v)), symbols(new_ring))
+            findfirst(v -> (string(u, "_0") == string(v)), symbols(new_ring))
         )
     end
     builder = MPolyBuildCtx(new_ring)
@@ -505,7 +505,7 @@ end
 
 #############
 
-function get_parameters(ode; initial_conditions = true)
+function get_parameters(ode; initial_conditions=true)
     if initial_conditions
         return vcat(ode.parameters, ode.x_vars)
     else
@@ -514,7 +514,7 @@ function get_parameters(ode; initial_conditions = true)
 end
 
 function var_to_symb(gn)
-   symbols(parent(gn))[var_index(gn)]
+    symbols(parent(gn))[var_index(gn)]
 end
 
 function add_to_vars_in_replica(poly::MPolyElem, mu, new_ring::MPolyRing, r)
@@ -528,7 +528,7 @@ function add_to_vars_in_replica(poly::MPolyElem, mu, new_ring::MPolyRing, r)
     """
     old_ring = parent(poly)
     # construct a mapping for the variable indices
-    var_mapping = Array{Any, 1}()
+    var_mapping = Array{Any,1}()
     mu_symbols = [var_to_symb(m) for m in mu]
 
     for u in symbols(old_ring)
@@ -540,7 +540,7 @@ function add_to_vars_in_replica(poly::MPolyElem, mu, new_ring::MPolyRing, r)
         else
             push!(
                 var_mapping,
-                findfirst(v -> (string(u,"_",r) == string(v)), symbols(new_ring))
+                findfirst(v -> (string(u, "_", r) == string(v)), symbols(new_ring))
             )
         end
     end 
@@ -565,7 +565,7 @@ end
 
 ############# Main Code
 
-function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds = 64)
+function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, nthrds=64)
 
     println("Solving the problem")
 # 1.Construct the maximal system
@@ -587,9 +587,9 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
     u = length(u_vars)
     s = length(mu) + n
     
-    Rjet = create_jet_ring(vcat(x_vars, y_vars, u_vars), mu, s+2)   
+    Rjet = create_jet_ring(vcat(x_vars, y_vars, u_vars), mu, s + 2)   
     gens_Rjet = gens(Rjet)
-    z_aux = gens_Rjet[end-length(mu)] 
+    z_aux = gens_Rjet[end - length(mu)] 
     x_eqs = collect(values(ode.x_equations))
     y_eqs = collect(values(ode.y_equations))
 
@@ -597,10 +597,10 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
     y_eqs = [[add_to_var(y_vars[i], Rjet, 0), add_zero_to_vars(unpack_fraction(y_eqs[i])[1], Rjet) // add_zero_to_vars(unpack_fraction(y_eqs[i])[2], Rjet)] for i in 1:m]
 
     eqs = vcat(x_eqs, y_eqs)
-    Q = foldl(lcm,[unpack_fraction(ex[2])[2] for ex in eqs])
+    Q = foldl(lcm, [unpack_fraction(ex[2])[2] for ex in eqs])
    
     not_int_cond_params = gens_Rjet[(end - length(ode.parameters) + 1):end]
-    all_params = vcat(not_int_cond_params,gens_Rjet[1:n])   
+    all_params = vcat(not_int_cond_params, gens_Rjet[1:n])   
     x_variables = gens_Rjet[1:n]
     for i in 1:(s + 1)
         x_variables = vcat(x_variables, gens_Rjet[(i * (n + m + u) + 1):(i * (n + m + u) + n)])
@@ -650,7 +650,7 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
     d0 = BigInt(maximum(vcat([total_degree(unpack_fraction(Q * eq[2])[1]) for eq in eqs], total_degree(Q))))    
     
     # (b) -----------------------  
-    D1 = floor(BigInt, (length(params_to_assess) + 1) * 2 * d0 * s * (n + 1) * (1 + 2 * d0 * s) / (1 - p_local) )
+    D1 = floor(BigInt, (length(params_to_assess) + 1) * 2 * d0 * s * (n + 1) * (1 + 2 * d0 * s) / (1 - p_local))
     
     # (c, d) ---------------
     sample = sample_point(D1, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq, Q)
@@ -673,7 +673,7 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
         for i in 1:m
             if prolongation_possible[i] == 1 
                 eqs_i = vcat(Et, Y[i][beta[i] + 1])
-                evl     = [evaluate(eq, vcat(u_hat[1], y_hat[1]), vcat(u_hat[2],y_hat[2])) for eq in eqs_i if !(eq in eqs_i_old)]
+                evl     = [evaluate(eq, vcat(u_hat[1], y_hat[1]), vcat(u_hat[2], y_hat[2])) for eq in eqs_i if !(eq in eqs_i_old)]
                 evl_old = vcat(evl_old, evl)
                 JacX    = jacobi_matrix(evl_old, x_theta_vars, all_x_theta_vars_subs) 
                 eqs_i_old = eqs_i
@@ -725,7 +725,7 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
         end
     end
 
-    theta_l = Array{fmpq_mpoly}(undef,0)
+    theta_l = Array{fmpq_mpoly}(undef, 0)
     params_to_assess = [add_to_var(param, Rjet, 0) for param in params_to_assess]
     Et_eval_base = [evaluate(e, vcat(u_hat[1], y_hat[1]), vcat(u_hat[2], y_hat[2])) for e in Et]
     for param_0 in params_to_assess
@@ -741,16 +741,16 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
         println("\n=== Summary ===")
         println("Globally identifiable parameters:                 []")
         println("Locally but not globally identifiable parameters: []")
-        println("Not identifiable parameters:                      [", join(params_to_assess,", "), "]")
+        println("Not identifiable parameters:                      [", join(params_to_assess, ", "), "]")
     else
-        println("Locally identifiable parameters: [", join([get_order_var(th,non_jet_ring)[1] for th in theta_l],", "), "]")
-        println("Not identifiable parameters:     [", join([get_order_var(th,non_jet_ring)[1] for th in setdiff(params_to_assess, theta_l)],", "), "]")
+        println("Locally identifiable parameters: [", join([get_order_var(th, non_jet_ring)[1] for th in theta_l], ", "), "]")
+        println("Not identifiable parameters:     [", join([get_order_var(th, non_jet_ring)[1] for th in setdiff(params_to_assess, theta_l)], ", "), "]")
 
 # 3. Randomize.
         println("Randomizing")
         # (a) ------------
         deg_variety =  foldl(*, [BigInt(total_degree(e)) for e in Et])
-        D2 = floor(BigInt, 6 * length(theta_l) * deg_variety * (1 + 2 * d0 * maximum(beta)) / (1 - p_local) )
+        D2 = floor(BigInt, 6 * length(theta_l) * deg_variety * (1 + 2 * d0 * maximum(beta)) / (1 - p_local))
         # (b, c) ---------
         sample = sample_point(D2, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq, Q)
         y_hat = sample[1]
@@ -764,7 +764,7 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
             Et_x_vars = union(Et_x_vars, get_vars(poly, x_vars, all_indets, n + m + u, s))
         end
         Q_hat = evaluate(Q, u_hat[1], u_hat[2])
-        vrs_sorted = vcat(sort([e for e in Et_x_vars], lt = (x, y) -> compare_diff_var(x, y, all_indets, n + m + u, s)), z_aux, sort(not_int_cond_params, rev=true))
+        vrs_sorted = vcat(sort([e for e in Et_x_vars], lt=(x, y) -> compare_diff_var(x, y, all_indets, n + m + u, s)), z_aux, sort(not_int_cond_params, rev=true))
 # 4. Determine.
         println("GB computation")  
 
@@ -780,19 +780,19 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
 
         theta_g = Array{spoly}(undef, 0)    
         Et_hat = [parent_ring_change(e, Rjet_new) for e in Et_hat]
-        gb = GroebnerBasis.f4(Ideal(Rjet_new, vcat(Et_hat, parent_ring_change(z_aux * Q_hat, Rjet_new) - 1)), nthrds = nthrds)
+        gb = GroebnerBasis.f4(Ideal(Rjet_new, vcat(Et_hat, parent_ring_change(z_aux * Q_hat, Rjet_new) - 1)), nthrds=nthrds)
         println("Remainder computation")
         
         if p_mod > 0
             theta_l_new = [parent_ring_change(_reduce_poly_mod_p(th, p_mod), Rjet_new) for th in theta_l]
     
             for i in 1:length(theta_l)
-                if Singular.reduce(theta_l_new[i], gb) == parent_ring_change(_reduce_poly_mod_p(Rjet(theta_hat[2][findfirst(isequal(theta_l[i]), theta_hat[1])]),p_mod), Rjet_new) 
+                if Singular.reduce(theta_l_new[i], gb) == parent_ring_change(_reduce_poly_mod_p(Rjet(theta_hat[2][findfirst(isequal(theta_l[i]), theta_hat[1])]), p_mod), Rjet_new) 
                     theta_g = vcat(theta_g, theta_l_new[i])
                 end
             end
         else
-           theta_l_new = [parent_ring_change(th, Rjet_new) for th in theta_l]
+            theta_l_new = [parent_ring_change(th, Rjet_new) for th in theta_l]
 
             for i in 1:length(theta_l)
                 if Singular.reduce(theta_l_new[i], gb) == parent_ring_change(Rjet(theta_hat[2][findfirst(isequal(theta_l[i]), theta_hat[1])]), Rjet_new)
@@ -802,9 +802,9 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
 
         end
         println("\n=== Summary ===")
-        println("Globally identifiable parameters:                 [", join([get_order_var(th,non_jet_ring)[1] for th in theta_g],", "), "]")
-        println("Locally but not globally identifiable parameters: [", join([get_order_var(th,non_jet_ring)[1] for th in setdiff(theta_l_new,theta_g)],", "), "]")
-        println("Not identifiable parameters:                      [", join([get_order_var(th,non_jet_ring)[1] for th in setdiff(params_to_assess, theta_l)],", "), "]")
+        println("Globally identifiable parameters:                 [", join([get_order_var(th, non_jet_ring)[1] for th in theta_g], ", "), "]")
+        println("Locally but not globally identifiable parameters: [", join([get_order_var(th, non_jet_ring)[1] for th in setdiff(theta_l_new, theta_g)], ", "), "]")
+        println("Not identifiable parameters:                      [", join([get_order_var(th, non_jet_ring)[1] for th in setdiff(params_to_assess, theta_l)], ", "), "]")
         println("===============")
     end
 end

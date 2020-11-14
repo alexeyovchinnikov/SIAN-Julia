@@ -29,6 +29,7 @@ If an ODE model has been entered with parameters for some of which it is desirab
 1) an ODE model (created by the @ODEmodel macros)
 2) a dictionary (or odered dictionary) of values such as (taken from the NFkB.jl example)
 
+```julia
 OrderedDict(
 
     a1 => Nemo.QQ(1, 2),   
@@ -64,5 +65,6 @@ OrderedDict(
     c_3c => Nemo.QQ(4, 10^(4))
 
 )
+```
 
 for instance, to specify that a1 is 1/2, etc.
