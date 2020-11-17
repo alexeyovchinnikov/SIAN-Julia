@@ -6,16 +6,13 @@ using Singular
 using GroebnerBasis
 using MacroTools
 using OrderedCollections
-using Nemo
-
-export ODE, @ODEmodel, macroexpand, macrohelper_extract_vars, macrohelper_clean
-
 ##################
 # these are specifics required for `using SIAN`
 # import AbstractAlgebra: Generic, MPolyRing, MPolyElem, RingElem, FieldElem
 # import MacroTools: @capture
 # import OrderedCollections: OrderedDict
 ##################
+export ODE, @ODEmodel, macroexpand, macrohelper_extract_vars, macrohelper_clean, Nemo, OrderedDict, fmpq_mpoly, Generic, get_parameters, identifiability_ode
 
 struct ODE{P}
     poly_ring::MPolyRing
