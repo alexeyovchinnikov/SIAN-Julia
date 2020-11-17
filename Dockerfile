@@ -3,7 +3,7 @@ FROM ubuntu:16.04
 COPY examples/ /usr/sian/examples/
 COPY without-macros/ /usr/sian/without-macros/
 COPY IdentifiabilityODE.jl /usr/sian
-
+COPY SIAN /usr/sian/SIAN
 ADD package_installs.jl /tmp/package_installs.jl
 
 RUN  apt-get update -y
