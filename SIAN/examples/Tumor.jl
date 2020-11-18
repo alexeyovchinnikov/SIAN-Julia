@@ -1,4 +1,4 @@
-using("SIAN")
+using SIAN
 
 
 println("Setting up the problem")
@@ -18,6 +18,6 @@ ode = @ODEmodel(
   y4(t) = d(t)
 )          
 
-identifiability_ode(ode, get_parameters(ode); p = 0.99, p_mod = 2^29 - 3, nthrds = 64)
+identifiability_ode(ode, get_parameters(ode); p=0.99, p_mod=2^29 - 3, nthrds=64)
 
 

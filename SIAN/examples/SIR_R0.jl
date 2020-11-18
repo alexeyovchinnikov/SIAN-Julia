@@ -1,4 +1,4 @@
-using("SIAN")
+using SIAN
 
 
 println("Setting up the problem")
@@ -12,6 +12,6 @@ ode = @ODEmodel(
   y2(t) = b // g + aux(t)
 )          
 
-identifiability_ode(ode, [aux]; p = 0.99, p_mod = 0, nthrds = 64)
+identifiability_ode(ode, [aux]; p=0.99, p_mod=0, nthrds=64)
 
 

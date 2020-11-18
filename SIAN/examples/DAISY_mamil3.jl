@@ -1,4 +1,4 @@
-using("SIAN")
+using SIAN
 
 println("Setting up the problem")
 
