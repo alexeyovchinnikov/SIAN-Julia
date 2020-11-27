@@ -801,10 +801,16 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
             end
 
         end
+        result = Dict(
+            "globally" => Set([get_order_var(th,non_jet_ring)[1] for th in theta_g]),
+            "locally_not_globally" => Set([get_order_var(th,non_jet_ring)[1] for th in setdiff(theta_l_new,theta_g)]),
+            "nonidentifiable" => Set([get_order_var(th,non_jet_ring)[1] for th in setdiff(params_to_assess, theta_l)])
+        )
         println("\n=== Summary ===")
-        println("Globally identifiable parameters:                 [", join([get_order_var(th,non_jet_ring)[1] for th in theta_g],", "), "]")
-        println("Locally but not globally identifiable parameters: [", join([get_order_var(th,non_jet_ring)[1] for th in setdiff(theta_l_new,theta_g)],", "), "]")
-        println("Not identifiable parameters:                      [", join([get_order_var(th,non_jet_ring)[1] for th in setdiff(params_to_assess, theta_l)],", "), "]")
+        println("Globally identifiable parameters:                 [", join(result["globally"],", "), "]")
+        println("Locally but not globally identifiable parameters: [", join(result["locally_not_globally"],", "), "]")
+        println("Not identifiable parameters:                      [", join(result["nonidentifiable"],", "), "]")
         println("===============")
+        return result
     end
 end
