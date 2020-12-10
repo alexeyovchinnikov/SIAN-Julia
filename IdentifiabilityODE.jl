@@ -36,6 +36,8 @@ struct ODE{P}
     end
 end
 
+#------------------------------------------------------------------------------
+
 function eval_at_dict(poly::P, d::OrderedDict{P, <: RingElem}) where P <: MPolyElem
     """
     Evaluates a polynomial on a dict var => val
@@ -45,8 +47,9 @@ function eval_at_dict(poly::P, d::OrderedDict{P, <: RingElem}) where P <: MPolyE
     return evaluate(poly, point)
 end
 
+#------------------------------------------------------------------------------
 
-function SetParameterValues(ode::ODE{P}, param_values::OrderedDict{P, T}) where {T <: FieldElem, P <: MPolyElem{T}}
+function set_parameter_values(ode::ODE{P}, param_values::OrderedDict{P, T}) where {T <: FieldElem, P <: MPolyElem{T}}
     """
     Input:
         - ode, an ODE as above
@@ -64,6 +67,8 @@ function SetParameterValues(ode::ODE{P}, param_values::OrderedDict{P, T}) where 
         [eval_at_dict(u, eval_dict) for u in ode.u_vars]
     )
 end
+
+#------------------------------------------------------------------------------
 
 function switch_ring(v::MPolyElem, ring::MPolyRing)
     """
@@ -86,6 +91,7 @@ function str_to_var(s, ring::MPolyRing)
     return gens(ring)[ind]
 end
 
+#------------------------------------------------------------------------------
 
 function eval_at_dict(poly::P, d::OrderedDict{P, <: RingElem}) where P <: MPolyElem
     """
@@ -96,6 +102,8 @@ function eval_at_dict(poly::P, d::OrderedDict{P, <: RingElem}) where P <: MPolyE
     return evaluate(poly, point)
 end
 
+#------------------------------------------------------------------------------
+
 function unpack_fraction(f::MPolyElem)
     return (f, one(parent(f)))
 end
@@ -103,6 +111,8 @@ end
 function unpack_fraction(f::Generic.Frac{<: MPolyElem})
     return (numerator(f), denominator(f))
 end
+
+#------------------------------------------------------------------------------
 
 function print_for_SIAN(ode::ODE{P}, outputs::Array{P, 1}) where P <: MPolyElem{<: FieldElem}
     """
@@ -131,6 +141,8 @@ function print_for_SIAN(ode::ODE{P}, outputs::Array{P, 1}) where P <: MPolyElem{
     return result
 end
 
+#------------------------------------------------------------------------------
+
 function macrohelper_extract_vars(equations::Array{Expr, 1})
     funcs, x_vars, all_symb = Array{Any}(undef, 0), Array{Any}(undef, 0), Array{Any}(undef, 0)
     aux_symb = Set([:(+), :(-), :(=), :(*), :(^), :t, :(/), :(//)])
@@ -154,8 +166,8 @@ function macrohelper_extract_vars(equations::Array{Expr, 1})
     all_symb = vcat(x_vars, io_vars, setdiff(all_symb, funcs))
     return x_vars, io_vars, all_symb
 end
-#------------------------------------------------------------------------------
 
+#------------------------------------------------------------------------------
 
 function macrohelper_clean(ex::Expr)
     ex = MacroTools.postwalk(x -> @capture(x, f_'(t)) ? f : x, ex)
@@ -163,6 +175,7 @@ function macrohelper_clean(ex::Expr)
     ex = MacroTools.postwalk(x -> x == :(/) ? :(//) : x, ex)
     return ex
 end
+
 #------------------------------------------------------------------------------
 
 macro ODEmodel(ex::Expr...)
@@ -230,13 +243,14 @@ macro ODEmodel(ex::Expr...)
     return esc(result)
 end
 
+#------------------------------------------------------------------------------
+
 function generate_replica(ode::ODE{P}, r::Int) where P <: MPolyElem
     """
     Returns ode_r, and r-fold replica of the original ode.
     States, outputs, and inputs are replicated, parameters are not
     """
     new_varnames = Array{String}(undef, 0)
-    #new_varnames = map(string, ode.parameters)
     for v in vcat(ode.x_vars, ode.y_vars, ode.u_vars)
         append!(new_varnames, [var_to_str(v) * "_r$i" for i in 1:r])
     end
@@ -264,7 +278,7 @@ function generate_replica(ode::ODE{P}, r::Int) where P <: MPolyElem
     return ODE{P}(new_x_eqs, new_y_eqs, new_us)
 end
 
-##################
+#------------------------------------------------------------------------------
 
 function _reduce_poly_mod_p(poly::MPolyElem{Nemo.fmpq}, p::Int)
     """
@@ -278,26 +292,26 @@ function _reduce_poly_mod_p(poly::MPolyElem{Nemo.fmpq}, p::Int)
     return change_base_ring(Nemo.GF(p), num) * (1 // Nemo.GF(p)(den))
 end
 
-##################
+#------------------------------------------------------------------------------
 
 function make_derivative(var_name, der_order)
     return(string(var_name, "_", der_order))
 end
 
-##################
+#------------------------------------------------------------------------------
 
 function add_to_var(vr, ring, r)
     return str_to_var(make_derivative(vr, r), ring)
 end
 
-##################
+#------------------------------------------------------------------------------
 
 function create_jet_ring(var_list, param_list, max_ord)
     varnames = vcat(vec(["$(s)_$i" for s in var_list, i in 0:max_ord]), "z_aux", ["$(s)_0" for s in param_list])
     return Nemo.PolynomialRing(Nemo.QQ, varnames)[1]
 end
 
-##################
+#------------------------------------------------------------------------------
 
 function differentiate_all(diff_poly, var_list, shft, max_ord)
     result = 0
@@ -307,23 +321,14 @@ function differentiate_all(diff_poly, var_list, shft, max_ord)
     return(result)
 end
 
-##################
-
-#function unpack_fraction(f)
-#    if applicable(numerator, f)
-#        return (numerator(f), denominator(f))
-#    end
-#    return (f, parent(f)(1))
-#end
-
-##################
+#------------------------------------------------------------------------------
 
 function eval_frac(frac, vars, vals)
     fr = unpack_fraction(frac)
     return(evaluate(fr[1], vars, vals)//evaluate(fr[2], vars, vals))
 end
 
-###################
+#------------------------------------------------------------------------------
 
 function sample_point(bound, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq, Q)
     local u_hat, theta_hat, all_subs
@@ -361,7 +366,7 @@ function sample_point(bound, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq
     return([[y_hat_vars, y_hat_vals], [u_variables, u_hat], [all_params, theta_hat], all_subs])
 end
 
-##################
+#------------------------------------------------------------------------------
 
 function jacobi_matrix(pol_arr, vrs, vals)
     m = Nemo.MatrixSpace(Nemo.QQ, length(pol_arr), length(vrs))()
@@ -373,7 +378,7 @@ function jacobi_matrix(pol_arr, vrs, vals)
     return(m)
 end
 
-##################
+#------------------------------------------------------------------------------
 
 function get_order_var2(diff_var, non_jet_vars, shft, s) 
     idx = var_index(diff_var)
@@ -384,7 +389,7 @@ function get_order_var2(diff_var, non_jet_vars, shft, s)
     end
 end
 
-##################
+#------------------------------------------------------------------------------
 
 function get_order_var(diff_var, non_jet_ring)
     rex = match(r"^(.*_)([0-9]+)$", string(diff_var))
@@ -395,14 +400,13 @@ function get_order_var(diff_var, non_jet_ring)
     end
 end
 
-##################
+#------------------------------------------------------------------------------
 
 function get_vars(diff_poly, var_list, non_jet_vars, shft, s)
     return [v for v in vars(diff_poly) if get_order_var2(v, non_jet_vars, shft, s)[1] in var_list]
 end
 
-
-##################
+#------------------------------------------------------------------------------
 
 function compare_diff_var(dvl, dvr, non_jet_vars, shft, s)
     vl, hl = get_order_var2(dvl, non_jet_vars, shft, s)
@@ -416,7 +420,7 @@ function compare_diff_var(dvl, dvr, non_jet_vars, shft, s)
     return (vr >= vl)
 end
 
-##################
+#------------------------------------------------------------------------------
 
 function parent_ring_change(poly::MPolyElem, new_ring::MPolyRing)
     """
@@ -455,7 +459,7 @@ function parent_ring_change(poly::MPolyElem, new_ring::MPolyRing)
     return finish(builder)
 end
 
-##################
+#------------------------------------------------------------------------------
 
 function insert_zeros_to_vals(var_arr, val_arr)
     all_val_arr = zeros(fmpq, length(gens(parent(var_arr[1]))))
@@ -465,17 +469,9 @@ function insert_zeros_to_vals(var_arr, val_arr)
     return all_val_arr
 end
 
-##################
+#------------------------------------------------------------------------------
 
 function add_zero_to_vars(poly::MPolyElem, new_ring::MPolyRing)
-    """
-    Converts a polynomial to a different polynomial ring
-    Input
-      - poly - a polynomial to be converted
-      - new_ring - a polynomial ring such that every variable name
-          appearing in poly appears among the generators
-    Output: a polynomial in new_ring "equal" to poly
-    """
     old_ring = parent(poly)
     # construct a mapping for the variable indices
     var_mapping = Array{Any, 1}()
@@ -503,7 +499,7 @@ function add_zero_to_vars(poly::MPolyElem, new_ring::MPolyRing)
     return finish(builder)
 end
 
-#############
+#------------------------------------------------------------------------------
 
 function get_parameters(ode; initial_conditions = true)
     if initial_conditions
@@ -513,19 +509,15 @@ function get_parameters(ode; initial_conditions = true)
     end
 end
 
+#------------------------------------------------------------------------------
+
 function var_to_symb(gn)
    symbols(parent(gn))[var_index(gn)]
 end
 
+#------------------------------------------------------------------------------
+
 function add_to_vars_in_replica(poly::MPolyElem, mu, new_ring::MPolyRing, r)
-    """
-    Converts a polynomial to a different polynomial ring
-    Input
-      - poly - a polynomial to be converted
-      - new_ring - a polynomial ring such that every variable name
-          appearing in poly appears among the generators
-    Output: a polynomial in new_ring "equal" to poly
-    """
     old_ring = parent(poly)
     # construct a mapping for the variable indices
     var_mapping = Array{Any, 1}()
@@ -562,13 +554,14 @@ function add_to_vars_in_replica(poly::MPolyElem, mu, new_ring::MPolyRing, r)
     return finish(builder)
 end
 
-
-############# Main Code
+#------------------------------------------------------------------------------
+# Main Code
+#------------------------------------------------------------------------------
 
 function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds = 64)
 
     println("Solving the problem")
-# 1.Construct the maximal system
+    # 1.Construct the maximal system
     
     # (a) ---------------
 
@@ -580,6 +573,7 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
     y_vars = ode.y_vars
     u_vars = ode.u_vars
     mu = ode.parameters
+    # Gleb: TODO: check 10^(-18), perhaps remove
     p_local = p + length(params_to_assess) * 10^(-18)
     
     n = length(x_vars)
@@ -643,7 +637,8 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
             Y_eq = vcat(Y_eq, [[leader,-(poly_d - separant * leader) // separant]])
         end
     end   
-# 2.Truncate
+    
+    # 2.Truncate
     println("Truncating")
     
     # (a) -----------------------
@@ -746,7 +741,7 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
         println("Locally identifiable parameters: [", join([get_order_var(th,non_jet_ring)[1] for th in theta_l],", "), "]")
         println("Not identifiable parameters:     [", join([get_order_var(th,non_jet_ring)[1] for th in setdiff(params_to_assess, theta_l)],", "), "]")
 
-# 3. Randomize.
+        # 3. Randomize.
         println("Randomizing")
         # (a) ------------
         deg_variety =  foldl(*, [BigInt(total_degree(e)) for e in Et])
@@ -765,7 +760,8 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
         end
         Q_hat = evaluate(Q, u_hat[1], u_hat[2])
         vrs_sorted = vcat(sort([e for e in Et_x_vars], lt = (x, y) -> compare_diff_var(x, y, all_indets, n + m + u, s)), z_aux, sort(not_int_cond_params, rev=true))
-# 4. Determine.
+        
+        # 4. Determine.
         println("GB computation")  
 
         
