@@ -1,3 +1,4 @@
+module IdentifiabilityODE
 println("Loading packages")
 using Oscar
 using LinearAlgebra
@@ -395,4 +396,5 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
         println("===============")
         return result
     end
+end
 end
