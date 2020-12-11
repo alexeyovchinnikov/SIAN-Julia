@@ -20,26 +20,42 @@ export @ODEmodel
 export ODE
 export Nemo, OrderedDict, Generic, macroexpand, macrohelper_extract_vars, macrohelper_clean,  fmpq_mpoly, get_parameters
 # ------------------------------------------------------------------------------
+"""
+    func make_derivative(var_name, der_order)
 
+Given a variable name `var_name` add a derivative order `der_order`.
+"""
 function make_derivative(var_name, der_order)
     return(string(var_name, "_", der_order))
 end
 
 # ------------------------------------------------------------------------------
+"""
+    func add_to_var(vr, ring, r)
 
+Convert a variable `vr` to a derivative of order `r` and convert the result to symbol.
+"""
 function add_to_var(vr, ring, r)
     return str_to_var(make_derivative(vr, r), ring)
 end
 
 # ------------------------------------------------------------------------------
+"""
+    func create_jet_ring(var_list, param_list, max_ord)
 
+Given a list of variables `var_list` and a list of parameters `param_list`, create a jet ring of derivatives up to order `max_ord`.
+"""
 function create_jet_ring(var_list, param_list, max_ord)
     varnames = vcat(vec(["$(s)_$i" for s in var_list, i in 0:max_ord]), "z_aux", ["$(s)_0" for s in param_list])
     return Nemo.PolynomialRing(Nemo.QQ, varnames)[1]
 end
 
 # ------------------------------------------------------------------------------
+"""
+    func differentiate_all(diff_poly, var_list, shft, max_ord)
 
+Differentiate a polynomial `diff_poly` with respect to `var_list` up to `max_ord` order.
+"""
 function differentiate_all(diff_poly, var_list, shft, max_ord)
     result = 0
     for i in 1:(shft * (max_ord + 1))
@@ -49,14 +65,18 @@ function differentiate_all(diff_poly, var_list, shft, max_ord)
 end
 
 # ------------------------------------------------------------------------------
+"""
+    func sample_point(bound, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq, Q)
 
+Sample random values for parameters of the polynomial system.
+"""
 function sample_point(bound, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq, Q)
     local u_hat, theta_hat, all_subs
     
     s = length(all_params)
     y_hat_vars = Array{fmpq_mpoly}(undef, 0)
     y_hat_vals = Array{fmpq}(undef, 0)
-
+        
     while true
         theta_hat = [fmpq(rnd) for rnd in rand(0:bound, s)]
         u_hat =  [fmpq(rnd) for rnd in rand(0:bound, length(u_variables))]
@@ -87,7 +107,13 @@ function sample_point(bound, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq
 end
 
 # ------------------------------------------------------------------------------
+"""
+    func jacobi_matrix(pol_arr, vrs, vals)
 
+Generate a Jacobi matrix from a given array of polynomial `pol_arr`,
+with respect to variables `vars`.
+The matrix is evaluated at `vals` from a symbolic to numeric representation.
+"""
 function jacobi_matrix(pol_arr, vrs, vals)
     m = Nemo.MatrixSpace(Nemo.QQ, length(pol_arr), length(vrs))()
     for i in 1:length(pol_arr)
@@ -99,7 +125,9 @@ function jacobi_matrix(pol_arr, vrs, vals)
 end
 
 # ------------------------------------------------------------------------------
-
+"""
+    func get_order_var2(diff_var, non_jet_vars, shft, s)
+"""
 function get_order_var2(diff_var, non_jet_vars, shft, s) 
     idx = var_index(diff_var)
     if idx <= shft * (s + 3)
@@ -110,7 +138,11 @@ function get_order_var2(diff_var, non_jet_vars, shft, s)
 end
 
 # ------------------------------------------------------------------------------
+"""
+    func get_order_var(diff_var, non_jet_ring)
 
+A helper function to obtain derivative order from string.
+"""
 function get_order_var(diff_var, non_jet_ring)
     rex = match(r"^(.*_)([0-9]+)$", string(diff_var))
     if rex === nothing
@@ -121,13 +153,21 @@ function get_order_var(diff_var, non_jet_ring)
 end
 
 # ------------------------------------------------------------------------------
+"""
+    func get_vars(diff_poly, var_list, non_jet_vars, shft, s)
 
+Get variables from `diff_poly` based on the intersection with `var_list`.
+"""
 function get_vars(diff_poly, var_list, non_jet_vars, shft, s)
     return [v for v in vars(diff_poly) if get_order_var2(v, non_jet_vars, shft, s)[1] in var_list]
 end
 
 # ------------------------------------------------------------------------------
-
+"""
+    func compare_diff_var(dvl, dvr, non_jet_vars, shft, s)
+    
+Comparison method of variables based on order.
+"""
 function compare_diff_var(dvl, dvr, non_jet_vars, shft, s)
     vl, hl = get_order_var2(dvl, non_jet_vars, shft, s)
     vr, hr = get_order_var2(dvr, non_jet_vars, shft, s)
@@ -141,7 +181,18 @@ function compare_diff_var(dvl, dvr, non_jet_vars, shft, s)
 end
 
 # ------------------------------------------------------------------------------
+""" 
+    func get_parameters(ode; initial_conditions=true)
 
+Retrieve parameters from the `ode` system. Retrieve initial conditions if `initial_conditions` is set `true`.
+
+## Input
+    - `ode::ODE` - an ODE system
+    - `initial_conditions::Bool` - whether to extract initial conditions. Default `true`.
+
+## Output
+        - Array of parameters (and initial conditions).
+"""
 function get_parameters(ode; initial_conditions=true)
     if initial_conditions
         return vcat(ode.parameters, ode.x_vars)
@@ -153,7 +204,19 @@ end
 # ------------------------------------------------------------------------------
 # Main Code
 # ------------------------------------------------------------------------------
+"""
+    func identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, nthrds=64)
 
+Perform identifiability check for a given `ode` system with respect to parameters in `params_to_assess` list.
+    
+## Input
+
+  - `ode` - an ODE system returned by the `@ODEmodel` macro.
+  - `params_to_assess` - an array of parameters returned by `get_parameters` function.
+  - `p` - probability of correctness, default `0.99`.
+  - `p_mod` - a prime characteristic, default `0`.
+    - `nthrds` - number of threads for concurrency, default `64`.
+"""
 function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, nthrds=64)
 
     println("Solving the problem")
