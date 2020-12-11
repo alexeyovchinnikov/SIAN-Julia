@@ -1,7 +1,7 @@
 using Test
 using TestSetExtensions
 
-include("../IdentifiabilityODE.jl")
+include("../src/IdentifiabilityODE.jl")
 
 @info "Testing started"
 

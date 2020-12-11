@@ -1,4 +1,4 @@
-include("../IdentifiabilityODE.jl")
+include("../src/IdentifiabilityODE.jl")
 
 println("Setting up the problem")
 
@@ -14,7 +14,7 @@ ode = @ODEmodel(
   y4(t) = eC(t)
 )
 
-identifiability_ode(ode, get_parameters(ode); p = 0.99, p_mod = 0, nthrds = 64)
+identifiability_ode(ode, get_parameters(ode); p = 0.99, p_mod = 0, nthrds = 1)
 
 # The following computation shows that one can identify more from two experiments
 # generate_replica(ode, 2) generates a system consiting of two copies of sigma
@@ -22,6 +22,6 @@ identifiability_ode(ode, get_parameters(ode); p = 0.99, p_mod = 0, nthrds = 64)
 
 r=2
 
-identifiability_ode(generate_replica(ode, r), get_parameters(ode; initial_conditions = false); p = 0.99, p_mod = 0, nthrds = 64)
+#identifiability_ode(generate_replica(ode, r), get_parameters(ode; initial_conditions = false); p = 0.99, p_mod = 0, nthrds = 64)
 
 
