@@ -1,7 +1,7 @@
 using Test
 using TestSetExtensions
 
-include("../src/IdentifiabilityODE.jl")
+using Pkg; Pkg.activate("../IdentifiabilityODE"); using IdentifiabilityODE
 
 @info "Testing started"
 

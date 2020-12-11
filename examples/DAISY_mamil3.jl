@@ -1,4 +1,4 @@
-include("../src/IdentifiabilityODE.jl")
+using Pkg; Pkg.activate("../IdentifiabilityODE"); using IdentifiabilityODE
 
 println("Setting up the problem")
 
@@ -9,6 +9,6 @@ ode = @ODEmodel(
   y(t) = x1(t)
 )          
 
-identifiability_ode(ode, get_parameters(ode); p = 0.99, p_mod = 0, nthrds = 64)
+identifiability_ode(ode, get_parameters(ode); p=0.99, p_mod=0, nthrds=64)
 
 
