@@ -1,4 +1,4 @@
-include("../IdentifiabilityODE.jl")
+include("../src/IdentifiabilityODE.jl")
 
 println("Setting up the problem")
 
@@ -13,6 +13,6 @@ ode = @ODEmodel(
   y2(t) = x2(t)
 )
 
-identifiability_ode(ode, get_parameters(ode); p = 0.99, p_mod = 2^29 - 3, nthrds = 64)
+res = identifiability_ode(ode, get_parameters(ode); p = 0.99, p_mod = 2^29 - 3, nthrds = 3)
 
-
+println(res)
