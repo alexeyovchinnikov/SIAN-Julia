@@ -38,7 +38,7 @@ struct ODE{P}
 end
 
     """
-        function eval_at_dict(poly::P, d::OrderedDict{P,<: RingElem}) where P <: MPolyElem
+        func eval_at_dict(poly::P, d::OrderedDict{P,<: RingElem}) where P <: MPolyElem
         
     Evaluates a polynomial on a dict `var => val` missing values are replaced with zeroes
     """
@@ -76,7 +76,7 @@ end
 
 
     """
-        function switch_ring(v::MPolyElem, ring::MPolyRing)
+        func switch_ring(v::MPolyElem, ring::MPolyRing)
 
     For a variable v, returns a variable in ring with the same name
     """
@@ -87,7 +87,7 @@ end
 
 
     """
-        function var_to_str(v::MPolyElem)
+        func var_to_str(v::MPolyElem)
 
     Convert a variable to type `string`.
     """
@@ -97,7 +97,7 @@ function var_to_str(v::MPolyElem)
 end
 
     """
-        function str_to_var(s, ring::MPolyRing)
+        func str_to_var(s, ring::MPolyRing)
 
     Convert a `string`-typed variable to a symbol.
     """
@@ -111,7 +111,7 @@ end
 
 
     """
-        function unpack_fraction(f::MPolyElem)
+        func unpack_fraction(f::MPolyElem)
 
     A helper-function, returns a `Tuple` of the input `f` and its parent's multiplicative identity.
     """
@@ -120,7 +120,7 @@ function unpack_fraction(f::MPolyElem)
 end
 
     """
-        function unpack_fraction(f::Generic.Frac{<: MPolyElem})
+        func unpack_fraction(f::Generic.Frac{<: MPolyElem})
 
     A helper-function, returns a `Tuple` of the numerator and denominator of `f`.
     """
@@ -130,7 +130,7 @@ end
 
 
     """
-        function print_for_SIAN(ode::ODE{P}, outputs::Array{P,1}) where P <: MPolyElem{<: FieldElem}
+        func print_for_SIAN(ode::ODE{P}, outputs::Array{P,1}) where P <: MPolyElem{<: FieldElem}
 
     Prints the ODE in the format accepted by SIAN (https://github.com/pogudingleb/SIAN)
     """
@@ -160,7 +160,7 @@ function print_for_SIAN(ode::ODE{P}, outputs::Array{P,1}) where P <: MPolyElem{<
 end
 
     """
-        function macrohelper_extract_vars(equations::Array{Expr,1})
+        func macrohelper_extract_vars(equations::Array{Expr,1})
 
     A helper-function for a macro used in extracting variables from equations.
     """
@@ -190,7 +190,7 @@ end
 # ------------------------------------------------------------------------------
 
     """
-        function macrohelper_clean(ex::Expr)
+        func macrohelper_clean(ex::Expr)
 
     A cleanup helper for the macro.
     """
@@ -279,7 +279,7 @@ end
 
 
     """
-        function generate_replica(ode::ODE{P}, r::Int) where P <: MPolyElem
+        func generate_replica(ode::ODE{P}, r::Int) where P <: MPolyElem
 
     Generate a replica of the original input system as per <Theorem here>.
     Returns `ode_r`, and r-fold replica of the original ode.
@@ -319,7 +319,7 @@ end
 
 
     """
-        function _reduce_poly_mod_p(poly::MPolyElem{Nemo.fmpq}, p::Int)
+        func _reduce_poly_mod_p(poly::MPolyElem{Nemo.fmpq}, p::Int)
 
     Reduces a polynomial over Q modulo p.
     """
@@ -336,7 +336,7 @@ end
 
 
     """
-        function make_derivative(var_name, der_order)
+        func make_derivative(var_name, der_order)
 
     Given a variable name add a derivative order.
     """
@@ -347,7 +347,7 @@ end
 ##################
 
     """
-        function add_to_var(vr, ring, r)
+        func add_to_var(vr, ring, r)
 
     Convert a variable `vr` to a derivative of order `r` and convert the result to symbol.
     """
@@ -358,7 +358,7 @@ end
 ##################
 
     """
-        function create_jet_ring(var_list, param_list, max_ord)
+        func create_jet_ring(var_list, param_list, max_ord)
 
     Given a list of variables `var_list` and a list of parameters `param_list`, create a jet ring of derivatives up to order `max_ord`.
     """
@@ -370,7 +370,7 @@ end
 ##################
 
     """
-        function differentiate_all(diff_poly, var_list, shft, max_ord)
+        func differentiate_all(diff_poly, var_list, shft, max_ord)
 
     Differentiate a polynomial `diff_poly` with respect to `var_list` up to `max_ord` order.
     """
@@ -394,7 +394,7 @@ end
 ##################
 
     """
-        function eval_frac(frac, vars, vals)
+        func eval_frac(frac, vars, vals)
 
     Evaluate a given fraction `frac` with values `vals` in place of variables `vars`.
     """
@@ -407,7 +407,7 @@ end
 
 
     """
-        function sample_point(bound, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq, Q)
+        func sample_point(bound, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq, Q)
 
     Sample random values for parameters of the polynomial system.
     """
@@ -467,7 +467,7 @@ end
 
     ##################
     """
-        function get_order_var2(diff_var, non_jet_vars, shft, s)
+        func get_order_var2(diff_var, non_jet_vars, shft, s)
     """
 function get_order_var2(diff_var, non_jet_vars, shft, s)
     idx = var_index(diff_var)
@@ -481,7 +481,7 @@ end
 ##################
 
     """
-        function get_order_var(diff_var, non_jet_ring)
+        func get_order_var(diff_var, non_jet_ring)
 
         A helper function to obtain derivative order from string.
     """
@@ -497,7 +497,7 @@ end
 ##################
 
     """
-        function get_vars(diff_poly, var_list, non_jet_vars, shft, s)
+        func get_vars(diff_poly, var_list, non_jet_vars, shft, s)
 
         Get variables from `diff_poly` based on the intersection with `var_list`.
     """
@@ -510,7 +510,7 @@ end
 
 
     """
-        function compare_diff_var(dvl, dvr, non_jet_vars, shft, s)
+        func compare_diff_var(dvl, dvr, non_jet_vars, shft, s)
     
         Comparison method of variables based on order.
     """
@@ -528,7 +528,7 @@ end
 
     ##################
     """
-        function parent_ring_change(poly::MPolyElem, new_ring::MPolyRing)
+        func parent_ring_change(poly::MPolyElem, new_ring::MPolyRing)
 
     Converts a polynomial to a different polynomial ring.
 
@@ -572,7 +572,7 @@ end
 
     ##################
     """
-        function insert_zeros_to_vals(var_arr, val_arr)
+        func insert_zeros_to_vals(var_arr, val_arr)
 
     Insert zeros at positions based on the variables' index.
 
@@ -588,7 +588,7 @@ end
 
     ##################
     """
-        function add_zero_to_vars(poly::MPolyElem, new_ring::MPolyRing)
+        func add_zero_to_vars(poly::MPolyElem, new_ring::MPolyRing)
 Converts a polynomial to a different polynomial ring.
 
 ## Input
@@ -650,7 +650,7 @@ function get_parameters(ode; initial_conditions=true)
 end
         
     """
-        function var_to_symb(var)
+        func var_to_symb(var)
 
     Convert a variable `var` to `symbol`.
     """
@@ -659,7 +659,7 @@ function var_to_symb(var)
 end
 
     """
-        function add_to_vars_in_replica(poly::MPolyElem, mu, new_ring::MPolyRing, r)
+        func add_to_vars_in_replica(poly::MPolyElem, mu, new_ring::MPolyRing, r)
 
     A helper routine to add variables from symbols of the old ring based on `poly`, 
     to the `new_ring` object.
@@ -705,7 +705,7 @@ end
 
     ############# Main Code
     """
-        function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, nthrds=64)
+        func identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, nthrds=64)
     
     Perform identifiability check for a given `ode` system with respect to parameters in `params_to_assess` list.
     
