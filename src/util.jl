@@ -1,29 +1,42 @@
 # ------------------------------------------------------------------------------
+"""
+    func eval_at_dict(poly::P, d::OrderedDict{P,<: RingElem}) where P <: MPolyElem
 
+Evaluates a polynomial on a dict var => val
+missing values are replaced with zeroes
+"""
 function eval_at_dict(poly::P, d::OrderedDict{P,<: RingElem}) where P <: MPolyElem
-    """
-    Evaluates a polynomial on a dict var => val
-    missing values are replaced with zeroes
-    """
+    
     point = [get(d, v, base_ring(parent(poly))(0)) for v in gens(parent(poly))]
     return evaluate(poly, point)
 end
 
 # ------------------------------------------------------------------------------
+"""
+    func switch_ring(v::MPolyElem, ring::MPolyRing)
 
+For a variable v, returns a variable in ring with the same name
+"""
 function switch_ring(v::MPolyElem, ring::MPolyRing)
-    """
-    For a variable v, returns a variable in ring with the same name
-    """
     ind = findfirst(vv -> vv == v, gens(parent(v)))
     return str_to_var(string(symbols(parent(v))[ind]), ring)
 end
 
+"""
+    func var_to_str(v::MPolyElem)
+
+Convert a variable to type `string`.
+"""
 function var_to_str(v::MPolyElem)
     ind = findfirst(vv -> vv == v, gens(parent(v)))
     return string(symbols(parent(v))[ind])
 end
 
+"""
+    func str_to_var(s, ring::MPolyRing)
+
+Convert a `string`-typed variable to a symbol.
+"""
 function str_to_var(s, ring::MPolyRing)
     ind = findfirst(v -> (string(v) == s), symbols(ring))
     if ind == nothing
@@ -34,10 +47,20 @@ end
 
 # ------------------------------------------------------------------------------
 
+"""
+    func unpack_fraction(f::MPolyElem)
+
+A helper-function, returns a `Tuple` of the input `f` and its parent's multiplicative identity.
+"""
 function unpack_fraction(f::MPolyElem)
     return (f, one(parent(f)))
 end
 
+"""
+    func unpack_fraction(f::Generic.Frac{<: MPolyElem})
+
+A helper-function, returns a `Tuple` of the numerator and denominator of `f`.
+"""
 function unpack_fraction(f::Generic.Frac{<: MPolyElem})
     return (numerator(f), denominator(f))
 end
@@ -68,14 +91,6 @@ Converts a polynomial to a different polynomial ring.
     - a polynomial in new_ring "equal" to `poly`
 """
 function parent_ring_change(poly::MPolyElem, new_ring::MPolyRing)
-    """
-    Converts a polynomial to a different polynomial ring
-    Input
-      - poly - a polynomial to be converted
-      - new_ring - a polynomial ring such that every variable name
-          appearing in poly appears among the generators
-    Output: a polynomial in new_ring "equal" to poly
-    """
     old_ring = parent(poly)
     # construct a mapping for the variable indices
     var_mapping = Array{Any,1}()

@@ -1,16 +1,16 @@
 struct ODE{P}
     poly_ring::MPolyRing
-    x_vars::Array{P, 1}
-    y_vars::Array{P, 1}
-    u_vars::Array{P, 1}
-    parameters::Array{P, 1}
-    x_equations::OrderedDict{P, <: Union{P, Generic.Frac{P}}}
-    y_equations::OrderedDict{P, <: Union{P, Generic.Frac{P}}}
+    x_vars::Array{P,1}
+    y_vars::Array{P,1}
+    u_vars::Array{P,1}
+    parameters::Array{P,1}
+    x_equations::OrderedDict{P,<: Union{P,Generic.Frac{P}}}
+    y_equations::OrderedDict{P,<: Union{P,Generic.Frac{P}}}
     
     function ODE{P}(
-            x_eqs::OrderedDict{P, <: Union{P, Generic.Frac{P}}}, 
-            y_eqs::OrderedDict{P, <: Union{P, Generic.Frac{P}}},    
-            inputs::Array{P, 1}
+            x_eqs::OrderedDict{P,<: Union{P,Generic.Frac{P}}}, 
+            y_eqs::OrderedDict{P,<: Union{P,Generic.Frac{P}}},    
+            inputs::Array{P,1}
         ) where {P <: MPolyElem{<: FieldElem}}
         # Initialize ODE
         # x_eqs is a dictionary x_i => f_i(x, u, params)
@@ -26,33 +26,40 @@ struct ODE{P}
     end
 end
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+"""
+    func set_parameter_values(ode::ODE{P}, param_values::OrderedDict{P,T}) where {T <: FieldElem,P <: MPolyElem{T}}
+    
+Substitute parameters with numerical values.
 
-function set_parameter_values(ode::ODE{P}, param_values::OrderedDict{P, T}) where {T <: FieldElem, P <: MPolyElem{T}}
-    """
-    Input:
-        - ode, an ODE as above
-        - param_values, values for (some of) the parameters as dictionary parameter => value
-    Output: new ode with the parameters in param_values plugged with the given numbers
-    """
+## Input:
+- ode, an ODE as above
+- param_values, values for (some of) the parameters as dictionary parameter => value
+
+## Output: 
+- new ode with the parameters in param_values plugged with the given numbers
+"""
+function set_parameter_values(ode::ODE{P}, param_values::OrderedDict{P,T}) where {T <: FieldElem,P <: MPolyElem{T}}
     new_vars = map(var_to_str, [v for v in gens(ode.poly_ring) if !(v in keys(param_values))])
     small_ring, small_vars = Nemo.PolynomialRing(base_ring(ode.poly_ring), new_vars)
     eval_dict = OrderedDict(str_to_var(v, ode.poly_ring) => str_to_var(v, small_ring) for v in new_vars)
     merge!(eval_dict, OrderedDict(p => small_ring(val) for (p, val) in param_values))
 
     return ODE{P}(
-        OrderedDict{P, Union{P, Generic.Frac{P}}}(eval_at_dict(v, eval_dict) => eval_at_dict(f, eval_dict) for (v, f) in ode.x_equations),
-         OrderedDict{P, Union{P, Generic.Frac{P}}}(eval_at_dict(v, eval_dict) => eval_at_dict(f, eval_dict) for (v, f) in ode.y_equations),
+        OrderedDict{P,Union{P,Generic.Frac{P}}}(eval_at_dict(v, eval_dict) => eval_at_dict(f, eval_dict) for (v, f) in ode.x_equations),
+         OrderedDict{P,Union{P,Generic.Frac{P}}}(eval_at_dict(v, eval_dict) => eval_at_dict(f, eval_dict) for (v, f) in ode.y_equations),
         [eval_at_dict(u, eval_dict) for u in ode.u_vars]
     )
 end
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
-function print_for_SIAN(ode::ODE{P}, outputs::Array{P, 1}) where P <: MPolyElem{<: FieldElem}
-    """
-    Prints the ODE in the format accepted by SIAN (https://github.com/pogudingleb/SIAN)
-    """
+"""
+    func print_for_SIAN(ode::ODE{P}, outputs::Array{P,1}) where P <: MPolyElem{<: FieldElem}
+
+Prints the ODE in the format accepted by SIAN (https://github.com/pogudingleb/SIAN)
+"""
+function print_for_SIAN(ode::ODE{P}, outputs::Array{P,1}) where P <: MPolyElem{<: FieldElem}
     vars_str = OrderedDict(x => var_to_str(x) * "(t)" for x in vcat(ode.x_vars, ode.u_vars))
     merge!(vars_str, OrderedDict(p => var_to_str(p) for p in ode.parameters))
     R_print, vars_print = Nemo.PolynomialRing(base_ring(ode.poly_ring), [vars_str[v] for v in gens(ode.poly_ring)])
@@ -62,7 +69,7 @@ function print_for_SIAN(ode::ODE{P}, outputs::Array{P, 1}) where P <: MPolyElem{
         num, den = unpack_fraction(lhs)
         result = string(evaluate(num, vars_print))
         if den != 1
-             result = "($result) / ($(evaluate(den, vars_print)))"
+            result = "($result) / ($(evaluate(den, vars_print)))"
         end
         return result
     end
@@ -76,24 +83,28 @@ function print_for_SIAN(ode::ODE{P}, outputs::Array{P, 1}) where P <: MPolyElem{
     return result
 end
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+"""
+    func macrohelper_extract_vars(equations::Array{Expr,1})
 
-function macrohelper_extract_vars(equations::Array{Expr, 1})
+A helper-function for a macro used in extracting variables from equations.
+"""
+function macrohelper_extract_vars(equations::Array{Expr,1})
     funcs, x_vars, all_symb = Array{Any}(undef, 0), Array{Any}(undef, 0), Array{Any}(undef, 0)
     aux_symb = Set([:(+), :(-), :(=), :(*), :(^), :t, :(/), :(//)])
     for eq in equations
         MacroTools.postwalk(
             x -> begin 
-                if @capture(x, f_'(t)) 
-                    push!(x_vars, f)
-                    push!(all_symb, f)
-                elseif @capture(x, f_(t))
-                    push!(funcs, f)
-                elseif (x isa Symbol) && !(x in aux_symb)
-                    push!(all_symb, x)
-                end
-                return x
-            end, 
+            if @capture(x, f_'(t)) 
+                push!(x_vars, f)
+                push!(all_symb, f)
+            elseif @capture(x, f_(t))
+                push!(funcs, f)
+            elseif (x isa Symbol) && !(x in aux_symb)
+                push!(all_symb, x)
+            end
+            return x
+        end, 
             eq
         )
     end
@@ -102,8 +113,12 @@ function macrohelper_extract_vars(equations::Array{Expr, 1})
     return x_vars, io_vars, all_symb
 end
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+"""
+    func macrohelper_clean(ex::Expr)
 
+A cleanup helper for the macro.
+"""
 function macrohelper_clean(ex::Expr)
     ex = MacroTools.postwalk(x -> @capture(x, f_'(t)) ? f : x, ex)
     ex = MacroTools.postwalk(x -> @capture(x, f_(t)) ? f : x, ex)
@@ -111,13 +126,22 @@ function macrohelper_clean(ex::Expr)
     return ex
 end
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+"""
+    macro ODEmodel(ex::Expr...)
 
+Macro for creating an ODE from a list of equations and injecting all variables into the global scope.
+
+Example:
+
+```
+ode = @ODEmodel(
+    x1'(t) = - a * x1(t),
+    y1(t) = x1(t),
+)
+```
+"""
 macro ODEmodel(ex::Expr...)
-    """
-    Macros for creating an ODE from a list of equations
-    Also injects all variables into the global scope
-    """
     equations = [ex...]
     x_vars, io_vars, all_symb = macrohelper_extract_vars(equations)
     
@@ -133,8 +157,8 @@ macro ODEmodel(ex::Expr...)
     x_dict = gensym()
     y_dict = gensym()
     y_vars = Array{Any}(undef, 0)
-    x_dict_create_expr = :($x_dict = OrderedDict{fmpq_mpoly, Union{fmpq_mpoly, Generic.Frac{fmpq_mpoly}}}())
-    y_dict_create_expr = :($y_dict = OrderedDict{fmpq_mpoly, Union{fmpq_mpoly, Generic.Frac{fmpq_mpoly}}}())
+    x_dict_create_expr = :($x_dict = OrderedDict{fmpq_mpoly,Union{fmpq_mpoly,Generic.Frac{fmpq_mpoly}}}())
+    y_dict_create_expr = :($y_dict = OrderedDict{fmpq_mpoly,Union{fmpq_mpoly,Generic.Frac{fmpq_mpoly}}}())
     eqs_expr = []
     for eq in equations
         if eq.head != :(=)
@@ -178,8 +202,14 @@ macro ODEmodel(ex::Expr...)
     return esc(result)
 end
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+"""
+    func generate_replica(ode::ODE{P}, r::Int) where P <: MPolyElem
 
+Generate a replica of the original input system as per <Theorem here>.
+Returns `ode_r`, and r-fold replica of the original ode.
+States, outputs, and inputs are replicated, parameters are not.
+"""
 function generate_replica(ode::ODE{P}, r::Int) where P <: MPolyElem
     """
     Returns ode_r, and r-fold replica of the original ode.
@@ -191,9 +221,9 @@ function generate_replica(ode::ODE{P}, r::Int) where P <: MPolyElem
     end
     append!(new_varnames, map(string, ode.parameters))
     new_ring, new_vars = Nemo.PolynomialRing(base_ring(ode.poly_ring), new_varnames)
-    new_x_eqs = OrderedDict{P, Union{P, Generic.Frac{P}}}()
-    new_y_eqs = OrderedDict{P, Union{P, Generic.Frac{P}}}()
-    new_us = Array{P, 1}()
+    new_x_eqs = OrderedDict{P,Union{P,Generic.Frac{P}}}()
+    new_y_eqs = OrderedDict{P,Union{P,Generic.Frac{P}}}()
+    new_us = Array{P,1}()
     for i in 1:r
         eval = merge(
             OrderedDict(v => str_to_var(var_to_str(v) * "_r$i", new_ring) for v in vcat(ode.x_vars, ode.y_vars, ode.u_vars)),
@@ -202,19 +232,23 @@ function generate_replica(ode::ODE{P}, r::Int) where P <: MPolyElem
         eval_vec = [eval[v] for v in gens(ode.poly_ring)]
         new_x_eqs = merge(
             new_x_eqs, 
-            OrderedDict{P, Union{P, Generic.Frac{P}}}(evaluate(x, eval_vec) => evaluate(f, eval_vec) for (x, f) in ode.x_equations)
+            OrderedDict{P,Union{P,Generic.Frac{P}}}(evaluate(x, eval_vec) => evaluate(f, eval_vec) for (x, f) in ode.x_equations)
         )
         new_y_eqs = merge(
             new_y_eqs,
-            OrderedDict{P, Union{P, Generic.Frac{P}}}(evaluate(x, eval_vec) => evaluate(f, eval_vec) for (x, f) in ode.y_equations)
+            OrderedDict{P,Union{P,Generic.Frac{P}}}(evaluate(x, eval_vec) => evaluate(f, eval_vec) for (x, f) in ode.y_equations)
         )
         append!(new_us, [str_to_var(var_to_str(u) * "_r$i", new_ring) for u in ode.u_vars])
     end
     return ODE{P}(new_x_eqs, new_y_eqs, new_us)
 end
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+"""
+    func _reduce_poly_mod_p(poly::MPolyElem{Nemo.fmpq}, p::Int)
 
+Reduces a polynomial modulo p.
+"""
 function _reduce_poly_mod_p(poly::MPolyElem{Nemo.fmpq}, p::Int)
     """
     Reduces a polynomial over Q modulo p
@@ -227,6 +261,6 @@ function _reduce_poly_mod_p(poly::MPolyElem{Nemo.fmpq}, p::Int)
     return change_base_ring(Nemo.GF(p), num) * (1 // Nemo.GF(p)(den))
 end
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 
