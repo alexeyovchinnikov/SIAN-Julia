@@ -1,6 +1,6 @@
 name = "SIAN"
 uuid = "cf7bdac0-b945-4905-b5ad-bc3f1a757483"
-authors = ["Alexey Ovchinnikov <Alexey.Ovchinnikov@qc.cuny.edu>", "Gleb Pogudin <gleb.pogudin@polytechnique.edu>", "Ilia Ilmer <i.ilmer@icloud.com>"]
+authors = ["Ilia Ilmer <i.ilmer@icloud.com>", "Alexey Ovchinnikov <Alexey.Ovchinnikov@qc.cuny.edu>", "Gleb Pogudin <gleb.pogudin@polytechnique.edu>"]
 version = "1.0.0-a0"
 
 [deps]
