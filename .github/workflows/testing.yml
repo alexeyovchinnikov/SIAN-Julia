@@ -2,9 +2,11 @@ name: "SIAN Tests for Julia"
 description: "Runt tests for SIAN package"
 
 on: push
-steps:
-  - uses: actions/checkout@v1.0.0
-  - uses: julia-actions/setup-julia@v1
-    with:
-      version: ^1.5.1
-  - run: julia tests/runtests.jl
+jobs:
+  run-tests:
+    steps:
+      - uses: actions/checkout@v1.0.0
+      - uses: julia-actions/setup-julia@v1
+        with:
+          version: ^1.5.1
+      - run: julia tests/runtests.jl
