@@ -1,4 +1,4 @@
-using Pkg; Pkg.activate("../SIAN"); using SIAN
+using SIAN
 
 println("Setting up the problem")
 

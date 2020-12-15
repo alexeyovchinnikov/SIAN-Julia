@@ -1,7 +1,7 @@
 using Test
 using TestSetExtensions
 
-using Pkg; Pkg.activate("../IdentifiabilityODE"); using IdentifiabilityODE
+using SIAN
 
 @info "Testing started"
 
