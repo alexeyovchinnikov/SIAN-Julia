@@ -1,4 +1,4 @@
-using Pkg; Pkg.activate("../IdentifiabilityODE"); using IdentifiabilityODE
+using Pkg; Pkg.activate("../SIAN"); using SIAN
 
 println("Setting up the problem")
 

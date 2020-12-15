@@ -1,4 +1,4 @@
-name = "IdentifiabilityODE"
+name = "SIAN"
 uuid = "cf7bdac0-b945-4905-b5ad-bc3f1a757483"
 authors = ["Alexey Ovchinnikov <Alexey.Ovchinnikov@qc.cuny.edu>", "Gleb Pogudin <gleb.pogudin@polytechnique.edu>", "Ilia Ilmer <i.ilmer@icloud.com>"]
 version = "1.0.0-a0"
