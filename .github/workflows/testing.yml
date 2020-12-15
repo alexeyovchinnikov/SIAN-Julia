@@ -1,12 +1,19 @@
 name: "SIAN Tests for Julia"
-description: "Runt tests for SIAN package"
-
-on: push
+on: [push]
 jobs:
   run-tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        julia-version: ["^1.5.1", "nightly"]
+        julia-arch: [x64, x86]
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+
     steps:
-      - uses: actions/checkout@v1.0.0
-      - uses: julia-actions/setup-julia@v1
+      - uses: actions/checkout@v2
+      - uses: julia-actions/setup-julia@latest
         with:
-          version: ^1.5.1
+          version: ${{ matrix.julia-version }}
+      - uses: julia-actions/julia-buildpkg@latest
+      - uses: julia-actions/julia-runtest@latest
       - run: julia tests/runtests.jl
