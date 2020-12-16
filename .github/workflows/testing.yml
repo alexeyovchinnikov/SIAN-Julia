@@ -16,5 +16,5 @@ jobs:
           version: ${{ matrix.julia-version }}
       - uses: julia-actions/julia-buildpkg@latest
       - uses: julia-actions/julia-runtest@latest
-      - uses: run ls
+      - run: ls
       - run: julia tests/runtests.jl
