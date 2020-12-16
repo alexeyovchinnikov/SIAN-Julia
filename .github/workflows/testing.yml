@@ -5,9 +5,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        julia-version: ["1.5.1", "^1.5.1", "nightly"]
+        julia-version: ["1.5.1", "^1.5.1"]
         julia-arch: [x64, x86]
         os: [ubuntu-latest, macos-latest]
+        exclude:
+          - os: ubuntu-latest
+            julia-arch: x86
 
     steps:
       - uses: actions/checkout@v2
