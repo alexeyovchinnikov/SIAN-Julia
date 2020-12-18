@@ -11,6 +11,7 @@ using GroebnerBasis
 using MacroTools
 using OrderedCollections
 
+using Logging # * for the @warn macro
 include("util.jl")
 include("ODE.jl")
 
@@ -215,11 +216,15 @@ Perform identifiability check for a given `ode` system with respect to parameter
   - `params_to_assess` - an array of parameters returned by `get_parameters` function.
   - `p` - probability of correctness, default `0.99`.
   - `p_mod` - a prime characteristic, default `0`.
-    - `nthrds` - number of threads for concurrency, default `64`.
+  - `nthrds` - number of threads for concurrency, default `64`.
 """
 function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, nthrds=64)
 
     println("Solving the problem")
+
+    if p_mod != 0
+        @warn "Using `p_mod!=0` does not guarantee the same probability of correctness but allows to run the program shorter. Use at one's own risk. This warning was raised by `p_mod = $p_mod`."
+    end
     # 1.Construct the maximal system
     
     # (a) ---------------
