@@ -6,12 +6,6 @@ git-tree-sha1 = "8fa03ecf25341ff3e8fb301dba3f41c6fe09952e"
 uuid = "c3fe647b-3220-5bb0-a1ea-a7954cac585d"
 version = "0.10.0"
 
-[[Adapt]]
-deps = ["LinearAlgebra"]
-git-tree-sha1 = "42c42f2221906892ceb765dbcb1a51deeffd86d7"
-uuid = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
-version = "2.3.0"
-
 [[Antic_jll]]
 deps = ["Artifacts", "FLINT_jll", "GMP_jll", "JLLWrappers", "Libdl", "MPFR_jll", "Pkg"]
 git-tree-sha1 = "dc59b2af87ca9d434a98e2d77cae35097d22735d"
@@ -45,12 +39,6 @@ git-tree-sha1 = "8e695f735fca77e9708e795eda62afdb869cbb70"
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
 version = "0.3.4+0"
 
-[[CpuId]]
-deps = ["Markdown", "Test"]
-git-tree-sha1 = "f0464e499ab9973b43c20f8216d088b61fda80c6"
-uuid = "adafc99b-e345-5852-983c-f28acb93d879"
-version = "0.2.2"
-
 [[CxxWrap]]
 deps = ["Libdl", "MacroTools", "libcxxwrap_julia_jll"]
 git-tree-sha1 = "762359626941f45b21238eb373a0bcedf6b61dd7"
@@ -60,6 +48,11 @@ version = "0.11.0"
 [[Dates]]
 deps = ["Printf"]
 uuid = "ade2ca70-3891-5945-98fb-dc099432e06a"
+
+[[DeepDiffs]]
+git-tree-sha1 = "9824894295b62a6a4ab6adf1c7bf337b3a9ca34c"
+uuid = "ab62b9b5-e342-54a8-a765-a90f495de1a6"
+version = "1.2.0"
 
 [[Distributed]]
 deps = ["Random", "Serialization", "Sockets"]
@@ -160,12 +153,6 @@ version = "0.3.4"
 [[Logging]]
 uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
 
-[[LoopVectorization]]
-deps = ["DocStringExtensions", "LinearAlgebra", "OffsetArrays", "SIMDPirates", "SLEEFPirates", "UnPack", "VectorizationBase"]
-git-tree-sha1 = "3242a8f411e19eda9adc49d0b877681975c11375"
-uuid = "bdcacae8-1622-11e9-2a5c-532679323890"
-version = "0.8.26"
-
 [[MPFR_jll]]
 deps = ["GMP_jll", "Libdl", "Pkg"]
 git-tree-sha1 = "301ce96952df90bbaa2c66112b7c1f15ced2b55b"
@@ -221,12 +208,6 @@ git-tree-sha1 = "f2efe30c890513dea6789b814aa6d82968e9a279"
 uuid = "76642167-d241-5cee-8c94-7a494e8cb7b7"
 version = "1.10.1+0"
 
-[[OffsetArrays]]
-deps = ["Adapt"]
-git-tree-sha1 = "9db93b990af57b3a56dca38476832f60d58f777b"
-uuid = "6fe1bfb0-de20-5000-8ca7-80f57d26f881"
-version = "1.4.0"
-
 [[OpenSSL_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "71bbbc616a1d710879f5a1021bcba65ffba6ce58"
@@ -252,9 +233,9 @@ version = "1.2.0+1"
 
 [[Parsers]]
 deps = ["Dates"]
-git-tree-sha1 = "b417be52e8be24e916e34b3d70ec2da7bdf56a68"
+git-tree-sha1 = "6370b5b3cf2ce5a3d2b6f7ab2dc10f374e4d7d2b"
 uuid = "69de0a69-1ddd-5017-9359-2bf0b02dc9f0"
-version = "1.0.12"
+version = "1.0.14"
 
 [[Perl_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg", "Readline_jll"]
@@ -268,9 +249,9 @@ uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 
 [[Polymake]]
 deps = ["CxxWrap", "FLINT_jll", "JSON", "Libdl", "Markdown", "Mongoc", "MozillaCACerts_jll", "Ninja_jll", "Perl_jll", "Pkg", "REPL", "SparseArrays", "libpolymake_julia_jll", "polymake_jll"]
-git-tree-sha1 = "381ae77ed2d5c27ab86f7097d9b84c2baf8c085d"
+git-tree-sha1 = "191feaee25b13ba5fffdf48a59197fce06d9bc30"
 uuid = "d720cf60-89b5-51f5-aff5-213f193123e7"
-version = "0.5.2"
+version = "0.5.3"
 
 [[Printf]]
 deps = ["Unicode"]
@@ -296,24 +277,12 @@ version = "8.0.4+1"
 
 [[Requires]]
 deps = ["UUIDs"]
-git-tree-sha1 = "28faf1c963ca1dc3ec87f166d92982e3c4a1f66d"
+git-tree-sha1 = "e05c53ebc86933601d36212a93b39144a2733493"
 uuid = "ae029012-a4dd-5104-9daa-d747884805df"
-version = "1.1.0"
+version = "1.1.1"
 
 [[SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
-
-[[SIMDPirates]]
-deps = ["VectorizationBase"]
-git-tree-sha1 = "a1b418634d6478bf2163920eae3b536dcc768626"
-uuid = "21efa798-c60a-11e8-04d3-e1a92915a26a"
-version = "0.8.26"
-
-[[SLEEFPirates]]
-deps = ["Libdl", "SIMDPirates", "VectorizationBase"]
-git-tree-sha1 = "67ae90a18aa8c22bf159318300e765fbd89ddf6e"
-uuid = "476501e8-09a2-5ece-8869-fb82de89a1fa"
-version = "0.5.5"
 
 [[Serialization]]
 uuid = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
@@ -345,23 +314,18 @@ uuid = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 deps = ["Distributed", "InteractiveUtils", "Logging", "Random"]
 uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
+[[TestSetExtensions]]
+deps = ["DeepDiffs", "Distributed", "Test"]
+git-tree-sha1 = "3a2919a78b04c29a1a57b05e1618e473162b15d0"
+uuid = "98d24dd4-01ad-11ea-1b02-c9a08f80db04"
+version = "2.0.0"
+
 [[UUIDs]]
 deps = ["Random", "SHA"]
 uuid = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 
-[[UnPack]]
-git-tree-sha1 = "387c1f73762231e86e0c9c5443ce3b4a0a9a0c2b"
-uuid = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
-version = "1.0.2"
-
 [[Unicode]]
 uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
-
-[[VectorizationBase]]
-deps = ["CpuId", "Libdl", "LinearAlgebra"]
-git-tree-sha1 = "03e2fbb479a1ea350398195b6fbf439bae0f8260"
-uuid = "3d5dd08c-fd9d-11e8-17fa-ed2836048c2f"
-version = "0.12.33"
 
 [[XML2_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Libiconv_jll", "Pkg", "Zlib_jll"]
@@ -412,16 +376,16 @@ uuid = "1493ae25-0f90-5c0e-a06c-8c5077d6d66f"
 version = "1.6.9+2"
 
 [[libcxxwrap_julia_jll]]
-deps = ["Libdl", "Pkg"]
-git-tree-sha1 = "1b2520ea0c1d5cbc12e8a97c15427133d726f743"
+deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
+git-tree-sha1 = "48b83f1eb1349f7389dd5bbe4f90eb8534ed5336"
 uuid = "3eaa8342-bff7-56a5-9981-c04077f7cee7"
-version = "0.8.0+0"
+version = "0.8.5+1"
 
 [[libpolymake_julia_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Pkg", "libcxxwrap_julia_jll", "polymake_jll"]
-git-tree-sha1 = "d0af4b7321661b6e544606ae9086e51ebf90da97"
+git-tree-sha1 = "477a5e2cc71615d49544040c1eafa19a73988011"
 uuid = "4d8266f6-2b3b-57e3-ad7a-d431eaaac945"
-version = "0.2.0+1"
+version = "0.3.0+0"
 
 [[libsingular_julia_jll]]
 deps = ["CompilerSupportLibraries_jll", "Libdl", "Pkg", "Singular_jll", "libcxxwrap_julia_jll"]
@@ -449,9 +413,9 @@ version = "3.8.5+2"
 
 [[polymake_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "FLINT_jll", "GMP_jll", "JLLWrappers", "Libdl", "MPFR_jll", "PPL_jll", "Perl_jll", "Pkg", "bliss_jll", "boost_jll", "cddlib_jll", "lrslib_jll", "normaliz_jll"]
-git-tree-sha1 = "d817908dafd63ed97a3f0770845b3c3fed4cbce8"
+git-tree-sha1 = "3319b9bad3ea7d14d895510c48b488fdc7326859"
 uuid = "7c209550-9012-526c-9264-55ba7a78ba2c"
-version = "4.2.0+0"
+version = "4.2.1+0"
 
 [[snappy_jll]]
 deps = ["Artifacts", "JLLWrappers", "LZO_jll", "Libdl", "Pkg", "Zlib_jll"]
