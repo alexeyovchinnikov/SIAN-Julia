@@ -237,8 +237,6 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, nthrds=64)
     y_vars = ode.y_vars
     u_vars = ode.u_vars
     mu = ode.parameters
-    # Gleb: TODO: check 10^(-18), perhaps remove
-    p_local = p + length(params_to_assess) * 10^(-18)
     
     n = length(x_vars)
     m = length(y_vars)
@@ -309,7 +307,7 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, nthrds=64)
     d0 = BigInt(maximum(vcat([total_degree(unpack_fraction(Q * eq[2])[1]) for eq in eqs], total_degree(Q))))    
     
     # (b) -----------------------  
-    D1 = floor(BigInt, (length(params_to_assess) + 1) * 2 * d0 * s * (n + 1) * (1 + 2 * d0 * s) / (1 - p_local))
+    D1 = floor(BigInt, (length(params_to_assess) + 1) * 2 * d0 * s * (n + 1) * (1 + 2 * d0 * s) / (1 - p))
     
     # (c, d) ---------------
     sample = sample_point(D1, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq, Q)
@@ -409,7 +407,7 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, nthrds=64)
         println("Randomizing")
         # (a) ------------
         deg_variety =  foldl(*, [BigInt(total_degree(e)) for e in Et])
-        D2 = floor(BigInt, 6 * length(theta_l) * deg_variety * (1 + 2 * d0 * maximum(beta)) / (1 - p_local))
+        D2 = floor(BigInt, 6 * length(theta_l) * deg_variety * (1 + 2 * d0 * maximum(beta)) / (1 - p))
         # (b, c) ---------
         sample = sample_point(D2, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq, Q)
         y_hat = sample[1]
