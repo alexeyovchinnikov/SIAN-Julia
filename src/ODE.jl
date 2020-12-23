@@ -1,3 +1,6 @@
+# Comment: all the function have been adapted from a different repository.
+# A precise reference will be inserted once that repository will become public
+
 struct ODE{P}
     poly_ring::MPolyRing
     x_vars::Array{P,1}

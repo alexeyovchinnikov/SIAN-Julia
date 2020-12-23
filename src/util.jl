@@ -1,3 +1,11 @@
+# Comment: all the function except for
+#   - insert_zeros_to_vals
+#   - add_zero_to_vars
+#   - var_to_symb
+#   - add_to_vars_in_replica
+#   Have been adapted from a different repository. A precise reference will be
+#   inserted once that repository will become public
+
 # ------------------------------------------------------------------------------
 """
     func eval_at_dict(poly::P, d::OrderedDict{P,<: RingElem}) where P <: MPolyElem
