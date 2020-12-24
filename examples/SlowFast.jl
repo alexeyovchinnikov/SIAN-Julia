@@ -22,6 +22,6 @@ identifiability_ode(ode, get_parameters(ode); p=0.99, p_mod=0, nthrds=1)
 
 # r = 2
 
-# identifiability_ode(generate_replica(ode, r), get_parameters(ode; initial_conditions = false); p = 0.99, p_mod = 0, nthrds = 64)
+# identifiability_ode(generate_replica(ode, r), get_parameters(ode; initial_conditions = false); p = 0.99, p_mod = 0, nthrds = 1)
 
 
