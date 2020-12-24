@@ -8,6 +8,7 @@ The algorithm is based on the following papers:
 * [SIAN: software for structural identifiability analysis of ODE models](https://doi.org/10.1093/bioinformatics/bty1069) (Bioinformatics, Volume 35, Issue 16, Pages 2873–2874, 2019)
 
 The original Maple implementation is located [here](https://github.com/pogudingleb/SIAN).
+
 The main function "identifiability_ode" has two required arguments:
 
 1) an ODE model (created by the `@ODEmodel` macros)
