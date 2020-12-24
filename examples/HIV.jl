@@ -1,4 +1,4 @@
-include("../src/IdentifiabilityODE.jl")
+using SIAN
 
 println("Setting up the problem")
 
@@ -11,6 +11,6 @@ ode = @ODEmodel(
             y2(t) = x4(t)
 )          
 
-identifiability_ode(ode, get_parameters(ode); p = 0.99, p_mod = 0, nthrds = 64)
+identifiability_ode(ode, get_parameters(ode); p=0.99, p_mod=0, nthrds=64)
 
 

@@ -1,4 +1,4 @@
-include("../src/IdentifiabilityODE.jl")
+using SIAN
 
 println("Setting up the problem")
 
@@ -45,4 +45,4 @@ ode = set_parameter_values(ode, OrderedDict(
     c_3c => Nemo.QQ(4, 10^(4))
 ))
 
-identifiability_ode(ode,  get_parameters(ode); p = 0.99, p_mod = 2^29 - 3, nthrds = 64)
+identifiability_ode(ode,  get_parameters(ode); p=0.99, p_mod=2^29 - 3, nthrds=64)

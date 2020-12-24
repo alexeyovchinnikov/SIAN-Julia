@@ -1,4 +1,9 @@
-println("Loading packages")
+module SIAN
+
+println("Welcome to SIAN: Structural Identifiability ANalyzer!")
+println("This software comes with no warranty whatsoever.")
+println("Loading packages...")
+
 using Oscar
 using LinearAlgebra
 using Singular
@@ -6,47 +11,73 @@ using GroebnerBasis
 using MacroTools
 using OrderedCollections
 
+using Logging # * for the @warn macro
 include("util.jl")
 include("ODE.jl")
 
-#------------------------------------------------------------------------------
+# exports are required for "using"
+export identifiability_ode
+export @ODEmodel
+export ODE
+export Nemo, OrderedDict, Generic, macroexpand, macrohelper_extract_vars, macrohelper_clean,  fmpq_mpoly, get_parameters
+# ------------------------------------------------------------------------------
+"""
+    func make_derivative(var_name, der_order)
 
+Given a variable name `var_name` add a derivative order `der_order`.
+"""
 function make_derivative(var_name, der_order)
     return(string(var_name, "_", der_order))
 end
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+"""
+    func add_to_var(vr, ring, r)
 
+Convert a variable `vr` to a derivative of order `r` and convert the result to symbol.
+"""
 function add_to_var(vr, ring, r)
     return str_to_var(make_derivative(vr, r), ring)
 end
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+"""
+    func create_jet_ring(var_list, param_list, max_ord)
 
+Given a list of variables `var_list` and a list of parameters `param_list`, create a jet ring of derivatives up to order `max_ord`.
+"""
 function create_jet_ring(var_list, param_list, max_ord)
     varnames = vcat(vec(["$(s)_$i" for s in var_list, i in 0:max_ord]), "z_aux", ["$(s)_0" for s in param_list])
     return Nemo.PolynomialRing(Nemo.QQ, varnames)[1]
 end
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+"""
+    func differentiate_all(diff_poly, var_list, shft, max_ord)
 
+Differentiate a polynomial `diff_poly` with respect to `var_list` up to `max_ord` order.
+"""
 function differentiate_all(diff_poly, var_list, shft, max_ord)
     result = 0
     for i in 1:(shft * (max_ord + 1))
-        result = result + derivative(diff_poly, var_list[i]) * var_list[i+shft]
+        result = result + derivative(diff_poly, var_list[i]) * var_list[i + shft]
     end
     return(result)
 end
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+"""
+    func sample_point(bound, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq, Q)
 
+Sample random values for parameters of the polynomial system.
+"""
 function sample_point(bound, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq, Q)
     local u_hat, theta_hat, all_subs
     
     s = length(all_params)
     y_hat_vars = Array{fmpq_mpoly}(undef, 0)
     y_hat_vals = Array{fmpq}(undef, 0)
-
+        
     while true
         theta_hat = [fmpq(rnd) for rnd in rand(0:bound, s)]
         u_hat =  [fmpq(rnd) for rnd in rand(0:bound, length(u_variables))]
@@ -61,7 +92,7 @@ function sample_point(bound, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq
                 vl = evaluate(unpack_fraction(eq)[1], vls) // evaluate(unpack_fraction(eq)[2], vls)
                 y_hat_vars = vcat(y_hat_vars, Y_eq[(j - 1) * (s + 2) + i + 1][1])
                 y_hat_vals = vcat(y_hat_vals, vl)
-                vls[var_index(Y_eq[(j - 1)*(s + 2) + i + 1][1])] = vl
+                vls[var_index(Y_eq[(j - 1) * (s + 2) + i + 1][1])] = vl
                 all_subs = [vcat(all_subs[1], Y_eq[(j - 1) * (s + 2) + i + 1][1]), vcat(all_subs[2], vl)]
             end
             for j in 1:length(x_vars)
@@ -76,8 +107,14 @@ function sample_point(bound, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq
     return([[y_hat_vars, y_hat_vals], [u_variables, u_hat], [all_params, theta_hat], all_subs])
 end
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+"""
+    func jacobi_matrix(pol_arr, vrs, vals)
 
+Generate a Jacobi matrix from a given array of polynomial `pol_arr`,
+with respect to variables `vars`.
+The matrix is evaluated at `vals` from a symbolic to numeric representation.
+"""
 function jacobi_matrix(pol_arr, vrs, vals)
     m = Nemo.MatrixSpace(Nemo.QQ, length(pol_arr), length(vrs))()
     for i in 1:length(pol_arr)
@@ -88,41 +125,55 @@ function jacobi_matrix(pol_arr, vrs, vals)
     return(m)
 end
 
-#------------------------------------------------------------------------------
-
+# ------------------------------------------------------------------------------
+"""
+    func get_order_var2(diff_var, non_jet_vars, shft, s)
+"""
 function get_order_var2(diff_var, non_jet_vars, shft, s) 
     idx = var_index(diff_var)
     if idx <= shft * (s + 3)
         return([non_jet_vars[rem(idx - 1, shft) + 1], div(idx - 1, shft)])
     else
-        return([non_jet_vars[idx - shft*(s + 2) - 1], 0])
+        return([non_jet_vars[idx - shft * (s + 2) - 1], 0])
     end
 end
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+"""
+    func get_order_var(diff_var, non_jet_ring)
 
+A helper function to obtain derivative order from string.
+"""
 function get_order_var(diff_var, non_jet_ring)
     rex = match(r"^(.*_)([0-9]+)$", string(diff_var))
     if rex === nothing
         return(["", ""])
     else
-        return([str_to_var(first(rex[1], length(rex[1])-1), non_jet_ring), parse(Int, rex[2])])
+        return([str_to_var(first(rex[1], length(rex[1]) - 1), non_jet_ring), parse(Int, rex[2])])
     end
 end
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+"""
+    func get_vars(diff_poly, var_list, non_jet_vars, shft, s)
 
+Get variables from `diff_poly` based on the intersection with `var_list`.
+"""
 function get_vars(diff_poly, var_list, non_jet_vars, shft, s)
     return [v for v in vars(diff_poly) if get_order_var2(v, non_jet_vars, shft, s)[1] in var_list]
 end
 
-#------------------------------------------------------------------------------
-
+# ------------------------------------------------------------------------------
+"""
+    func compare_diff_var(dvl, dvr, non_jet_vars, shft, s)
+    
+Comparison method of variables based on order.
+"""
 function compare_diff_var(dvl, dvr, non_jet_vars, shft, s)
     vl, hl = get_order_var2(dvl, non_jet_vars, shft, s)
     vr, hr = get_order_var2(dvr, non_jet_vars, shft, s)
     if hl != hr
-       return (hl > hr)
+        return (hl > hr)
     end
     if length(string(vl)) != length(string(vr))
         return (length(string(vl)) > length(string(vr)))
@@ -130,9 +181,20 @@ function compare_diff_var(dvl, dvr, non_jet_vars, shft, s)
     return (vr >= vl)
 end
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+""" 
+    func get_parameters(ode; initial_conditions=true)
 
-function get_parameters(ode; initial_conditions = true)
+Retrieve parameters from the `ode` system. Retrieve initial conditions if `initial_conditions` is set `true`.
+
+## Input
+    - `ode::ODE` - an ODE system
+    - `initial_conditions::Bool` - whether to extract initial conditions. Default `true`.
+
+## Output
+        - Array of parameters (and initial conditions).
+"""
+function get_parameters(ode; initial_conditions=true)
     if initial_conditions
         return vcat(ode.parameters, ode.x_vars)
     else
@@ -140,13 +202,29 @@ function get_parameters(ode; initial_conditions = true)
     end
 end
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Main Code
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+"""
+    func identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, nthrds=64)
 
-function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds = 64)
+Perform identifiability check for a given `ode` system with respect to parameters in `params_to_assess` list.
+    
+## Input
+
+  - `ode` - an ODE system returned by the `@ODEmodel` macro.
+  - `params_to_assess` - an array of parameters returned by `get_parameters` function.
+  - `p` - probability of correctness, default `0.99`.
+  - `p_mod` - a prime characteristic, default `0`.
+  - `nthrds` - number of threads for concurrency, default `64`.
+"""
+function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, nthrds=64)
 
     println("Solving the problem")
+
+    if p_mod != 0
+        @warn "Using `p_mod!=0` does not guarantee the same probability of correctness but allows to run the program shorter. Use at one's own risk. This warning was raised by `p_mod = $p_mod`."
+    end
     # 1.Construct the maximal system
     
     # (a) ---------------
@@ -159,17 +237,15 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
     y_vars = ode.y_vars
     u_vars = ode.u_vars
     mu = ode.parameters
-    # Gleb: TODO: check 10^(-18), perhaps remove
-    p_local = p + length(params_to_assess) * 10^(-18)
     
     n = length(x_vars)
     m = length(y_vars)
     u = length(u_vars)
     s = length(mu) + n
     
-    Rjet = create_jet_ring(vcat(x_vars, y_vars, u_vars), mu, s+2)   
+    Rjet = create_jet_ring(vcat(x_vars, y_vars, u_vars), mu, s + 2)   
     gens_Rjet = gens(Rjet)
-    z_aux = gens_Rjet[end-length(mu)] 
+    z_aux = gens_Rjet[end - length(mu)] 
     x_eqs = collect(values(ode.x_equations))
     y_eqs = collect(values(ode.y_equations))
 
@@ -177,10 +253,10 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
     y_eqs = [[add_to_var(y_vars[i], Rjet, 0), add_zero_to_vars(unpack_fraction(y_eqs[i])[1], Rjet) // add_zero_to_vars(unpack_fraction(y_eqs[i])[2], Rjet)] for i in 1:m]
 
     eqs = vcat(x_eqs, y_eqs)
-    Q = foldl(lcm,[unpack_fraction(ex[2])[2] for ex in eqs])
+    Q = foldl(lcm, [unpack_fraction(ex[2])[2] for ex in eqs])
    
     not_int_cond_params = gens_Rjet[(end - length(ode.parameters) + 1):end]
-    all_params = vcat(not_int_cond_params,gens_Rjet[1:n])   
+    all_params = vcat(not_int_cond_params, gens_Rjet[1:n])   
     x_variables = gens_Rjet[1:n]
     for i in 1:(s + 1)
         x_variables = vcat(x_variables, gens_Rjet[(i * (n + m + u) + 1):(i * (n + m + u) + n)])
@@ -231,7 +307,7 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
     d0 = BigInt(maximum(vcat([total_degree(unpack_fraction(Q * eq[2])[1]) for eq in eqs], total_degree(Q))))    
     
     # (b) -----------------------  
-    D1 = floor(BigInt, (length(params_to_assess) + 1) * 2 * d0 * s * (n + 1) * (1 + 2 * d0 * s) / (1 - p_local) )
+    D1 = floor(BigInt, (length(params_to_assess) + 1) * 2 * d0 * s * (n + 1) * (1 + 2 * d0 * s) / (1 - p))
     
     # (c, d) ---------------
     sample = sample_point(D1, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq, Q)
@@ -254,7 +330,7 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
         for i in 1:m
             if prolongation_possible[i] == 1 
                 eqs_i = vcat(Et, Y[i][beta[i] + 1])
-                evl     = [evaluate(eq, vcat(u_hat[1], y_hat[1]), vcat(u_hat[2],y_hat[2])) for eq in eqs_i if !(eq in eqs_i_old)]
+                evl     = [evaluate(eq, vcat(u_hat[1], y_hat[1]), vcat(u_hat[2], y_hat[2])) for eq in eqs_i if !(eq in eqs_i_old)]
                 evl_old = vcat(evl_old, evl)
                 JacX    = jacobi_matrix(evl_old, x_theta_vars, all_x_theta_vars_subs) 
                 eqs_i_old = eqs_i
@@ -306,7 +382,7 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
         end
     end
 
-    theta_l = Array{fmpq_mpoly}(undef,0)
+    theta_l = Array{fmpq_mpoly}(undef, 0)
     params_to_assess = [add_to_var(param, Rjet, 0) for param in params_to_assess]
     Et_eval_base = [evaluate(e, vcat(u_hat[1], y_hat[1]), vcat(u_hat[2], y_hat[2])) for e in Et]
     for param_0 in params_to_assess
@@ -322,16 +398,16 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
         println("\n=== Summary ===")
         println("Globally identifiable parameters:                 []")
         println("Locally but not globally identifiable parameters: []")
-        println("Not identifiable parameters:                      [", join(params_to_assess,", "), "]")
+        println("Not identifiable parameters:                      [", join(params_to_assess, ", "), "]")
     else
-        println("Locally identifiable parameters: [", join([get_order_var(th,non_jet_ring)[1] for th in theta_l],", "), "]")
-        println("Not identifiable parameters:     [", join([get_order_var(th,non_jet_ring)[1] for th in setdiff(params_to_assess, theta_l)],", "), "]")
+        println("Locally identifiable parameters: [", join([get_order_var(th, non_jet_ring)[1] for th in theta_l], ", "), "]")
+        println("Not identifiable parameters:     [", join([get_order_var(th, non_jet_ring)[1] for th in setdiff(params_to_assess, theta_l)], ", "), "]")
 
         # 3. Randomize.
         println("Randomizing")
         # (a) ------------
         deg_variety =  foldl(*, [BigInt(total_degree(e)) for e in Et])
-        D2 = floor(BigInt, 6 * length(theta_l) * deg_variety * (1 + 2 * d0 * maximum(beta)) / (1 - p_local) )
+        D2 = floor(BigInt, 6 * length(theta_l) * deg_variety * (1 + 2 * d0 * maximum(beta)) / (1 - p))
         # (b, c) ---------
         sample = sample_point(D2, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq, Q)
         y_hat = sample[1]
@@ -345,7 +421,7 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
             Et_x_vars = union(Et_x_vars, get_vars(poly, x_vars, all_indets, n + m + u, s))
         end
         Q_hat = evaluate(Q, u_hat[1], u_hat[2])
-        vrs_sorted = vcat(sort([e for e in Et_x_vars], lt = (x, y) -> compare_diff_var(x, y, all_indets, n + m + u, s)), z_aux, sort(not_int_cond_params, rev=true))
+        vrs_sorted = vcat(sort([e for e in Et_x_vars], lt=(x, y) -> compare_diff_var(x, y, all_indets, n + m + u, s)), z_aux, sort(not_int_cond_params, rev=true))
         
         # 4. Determine.
         println("GB computation")  
@@ -362,19 +438,19 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
 
         theta_g = Array{spoly}(undef, 0)    
         Et_hat = [parent_ring_change(e, Rjet_new) for e in Et_hat]
-        gb = GroebnerBasis.f4(Ideal(Rjet_new, vcat(Et_hat, parent_ring_change(z_aux * Q_hat, Rjet_new) - 1)), nthrds = nthrds)
+        gb = GroebnerBasis.f4(Ideal(Rjet_new, vcat(Et_hat, parent_ring_change(z_aux * Q_hat, Rjet_new) - 1)), nthrds=nthrds)
         println("Remainder computation")
         
         if p_mod > 0
             theta_l_new = [parent_ring_change(_reduce_poly_mod_p(th, p_mod), Rjet_new) for th in theta_l]
     
             for i in 1:length(theta_l)
-                if Singular.reduce(theta_l_new[i], gb) == parent_ring_change(_reduce_poly_mod_p(Rjet(theta_hat[2][findfirst(isequal(theta_l[i]), theta_hat[1])]),p_mod), Rjet_new) 
+                if Singular.reduce(theta_l_new[i], gb) == parent_ring_change(_reduce_poly_mod_p(Rjet(theta_hat[2][findfirst(isequal(theta_l[i]), theta_hat[1])]), p_mod), Rjet_new) 
                     theta_g = vcat(theta_g, theta_l_new[i])
                 end
             end
         else
-           theta_l_new = [parent_ring_change(th, Rjet_new) for th in theta_l]
+            theta_l_new = [parent_ring_change(th, Rjet_new) for th in theta_l]
 
             for i in 1:length(theta_l)
                 if Singular.reduce(theta_l_new[i], gb) == parent_ring_change(Rjet(theta_hat[2][findfirst(isequal(theta_l[i]), theta_hat[1])]), Rjet_new)
@@ -384,15 +460,16 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
 
         end
         result = Dict(
-            "globally" => Set([get_order_var(th,non_jet_ring)[1] for th in theta_g]),
-            "locally_not_globally" => Set([get_order_var(th,non_jet_ring)[1] for th in setdiff(theta_l_new,theta_g)]),
-            "nonidentifiable" => Set([get_order_var(th,non_jet_ring)[1] for th in setdiff(params_to_assess, theta_l)])
+            "globally" => Set([get_order_var(th, non_jet_ring)[1] for th in theta_g]),
+            "locally_not_globally" => Set([get_order_var(th, non_jet_ring)[1] for th in setdiff(theta_l_new, theta_g)]),
+            "nonidentifiable" => Set([get_order_var(th, non_jet_ring)[1] for th in setdiff(params_to_assess, theta_l)])
         )
         println("\n=== Summary ===")
-        println("Globally identifiable parameters:                 [", join(result["globally"],", "), "]")
-        println("Locally but not globally identifiable parameters: [", join(result["locally_not_globally"],", "), "]")
-        println("Not identifiable parameters:                      [", join(result["nonidentifiable"],", "), "]")
+        println("Globally identifiable parameters:                 [", join(result["globally"], ", "), "]")
+        println("Locally but not globally identifiable parameters: [", join(result["locally_not_globally"], ", "), "]")
+        println("Not identifiable parameters:                      [", join(result["nonidentifiable"], ", "), "]")
         println("===============")
         return result
     end
+end
 end
