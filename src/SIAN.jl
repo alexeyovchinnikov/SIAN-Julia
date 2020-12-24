@@ -223,7 +223,7 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, nthrds=64)
     println("Solving the problem")
 
     if p_mod != 0
-        @warn "Using `p_mod!=0` does not guarantee the same probability of correctness but allows to run the program shorter. Use at one's own risk. This warning was raised by `p_mod = $p_mod`."
+        @warn "Using `p_mod!=0` does not guarantee the same probability of correctness but allows to run the program faster. This warning was raised by `p_mod = $p_mod`."
     end
     # 1.Construct the maximal system
     
