@@ -216,9 +216,9 @@ Perform identifiability check for a given `ode` system with respect to parameter
   - `params_to_assess` - an array of parameters returned by `get_parameters` function.
   - `p` - probability of correctness, default `0.99`.
   - `p_mod` - a prime characteristic, default `0`.
-  - `nthrds` - number of threads for concurrency, default `64`.
+  - `nthrds` - number of threads for concurrency, default `Sys.CPU_THREADS`.
 """
-function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, nthrds=64)
+function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, nthrds=Sys.CPU_THREADS)
 
     println("Solving the problem")
 
