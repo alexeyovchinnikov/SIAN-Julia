@@ -1,5 +1,5 @@
 # SIAN-Julia
-![SIAN Tests for Julia](https://github.com/alexeyovchinnikov/SIAN-Julia/workflows/SIAN%20Tests%20for%20Julia/badge.svg)
+<!-- ![SIAN Tests for Julia](https://github.com/alexeyovchinnikov/SIAN-Julia/workflows/SIAN%20Tests%20for%20Julia/badge.svg) -->
 
 ## Implementation of SIAN in Julia
 
