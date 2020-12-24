@@ -1,5 +1,5 @@
 module SIAN
-# TODO: Default characterstic p: 0 or non 0?
+
 println("Welcome to SIAN: Structural Identifiability ANalyzer!")
 println("This software comes with no warranty whatsoever.")
 println("Loading packages...")
