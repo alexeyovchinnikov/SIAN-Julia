@@ -3,6 +3,12 @@
 
 ## Implementation of SIAN in Julia
 
+The algorithm is based on the following papers:
+* [Global Identifiability of Differential Models](https://onlinelibrary.wiley.com/doi/abs/10.1002/cpa.21921) (Communications on Pure and Applied Mathematics, Volume 73, Issue 9, Pages 1831-1879, 2020.) 
+* [SIAN: software for structural identifiability analysis of ODE models](https://doi.org/10.1093/bioinformatics/bty1069) (Bioinformatics, Volume 35, Issue 16, Pages 2873–2874, 2019)
+
+The original Maple implementation is located [here](https://github.com/pogudingleb/SIAN).
+
 The main function "identifiability_ode" has two required arguments:
 
 1) an ODE model (created by the `@ODEmodel` macros)
