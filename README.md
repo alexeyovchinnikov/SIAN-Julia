@@ -1,7 +1,7 @@
 # SIAN-Julia
 ![SIAN Tests for Julia](https://github.com/iliailmer/SIAN-Julia/workflows/SIAN%20Tests%20for%20Julia/badge.svg)
 
-## Installation
+## Installing
 
 SIAN.jl can be installed via the following command(s):
 

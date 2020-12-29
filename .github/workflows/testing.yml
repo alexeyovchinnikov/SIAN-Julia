@@ -1,6 +1,11 @@
 name: "SIAN Tests for Julia"
 on: [push]
 jobs:
+  paths-ignore:
+    - 'README.md'
+    - 'Dockerfile'
+    - '.gitignore'
+    
   run-tests:
     runs-on: ${{ matrix.os }}
     strategy:
