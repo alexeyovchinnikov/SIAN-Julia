@@ -1,5 +1,10 @@
 name: "SIAN Tests for Julia"
-on: [push]
+on:
+  push:
+    paths-ignore:
+    - 'README.md'
+    - 'Dockerfile'
+    - '.gitignore'
 jobs:
   run-tests:
     runs-on: ${{ matrix.os }}
@@ -7,7 +12,7 @@ jobs:
       matrix:
         julia-version: ["1.5.1"]
         julia-arch: [x64, x86]
-        os: [macos-latest]
+        os: [macos-latest, ubuntu-latest]
 
     steps:
       - uses: actions/checkout@v2

@@ -1,6 +1,25 @@
 # SIAN-Julia
 ![SIAN Tests for Julia](https://github.com/iliailmer/SIAN-Julia/workflows/SIAN%20Tests%20for%20Julia/badge.svg)
 
+## Installing
+
+SIAN.jl can be installed via the following command(s):
+
+```zsh
+> ]add https://github.com/alexeyovchinnikov/SIAN-Julia.git
+```
+
+or
+```zsh
+> ]add git@github.com:alexeyovchinnikov/SIAN-Julia.git
+```
+
+or
+
+```julia
+> using Pkg
+> Pkg.add("git@github.com:alexeyovchinnikov/SIAN-Julia.git")
+```
 ## Implementation of SIAN in Julia
 
 The algorithm is based on the following papers:
