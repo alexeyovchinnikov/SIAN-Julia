@@ -21,3 +21,5 @@ jobs:
           version: ${{ matrix.julia-version }}
       - uses: julia-actions/julia-buildpkg@latest
       - uses: julia-actions/julia-runtest@latest
+      # - name: Julia TagBot
+      #   uses: JuliaRegistries/TagBot@v1.10.0
