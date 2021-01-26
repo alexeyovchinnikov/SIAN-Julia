@@ -3,22 +3,20 @@
 
 ## Installing
 
-SIAN.jl can be installed via the following command(s):
+The current stable version of SIAN.jl can be installed via the following command:
 
+```zsh
+>] add "SIAN"
+> using SIAN
+```
+
+The installation from source is possible via GitHub and SSH or HTTPS:
 ```zsh
 > ]add https://github.com/alexeyovchinnikov/SIAN-Julia.git
 ```
-
 or
 ```zsh
 > ]add git@github.com:alexeyovchinnikov/SIAN-Julia.git
-```
-
-or
-
-```julia
-> using Pkg
-> Pkg.add("git@github.com:alexeyovchinnikov/SIAN-Julia.git")
 ```
 ## Implementation of SIAN in Julia
 
