@@ -12,6 +12,6 @@ ode = @ODEmodel(
   y2(t) = z(t)
 )          
 
-identifiability_ode(ode, get_parameters(ode); p=0.99, p_mod=2^29 - 3, nthrds=1)
+res = identifiability_ode(ode, get_parameters(ode); p=0.99, p_mod=2^29 - 3, nthrds=1)
 
-
+println(res)

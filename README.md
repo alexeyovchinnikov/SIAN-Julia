@@ -25,6 +25,9 @@ Once the module is imported via `using SIAN`, the following functions are availa
 
 Other SIAN functions are available via prefix call, such as `SIAN.<any_function_name>`.
 
+### Getting started
+
+We recommend checking the `examples` folder to get started with using SIAN, see [this readme file](./examples/README.md).
 ## Implementation of SIAN in Julia
 
 The algorithm is based on the following papers:

@@ -11,6 +11,6 @@ ode = @ODEmodel(
   y2(t) = b // g + aux(t)
 )          
 
-identifiability_ode(ode, [aux]; p=0.99, p_mod=0, nthrds=1)
+res = identifiability_ode(ode, [aux]; p=0.99, p_mod=0, nthrds=1)
 
-
+println(res)
