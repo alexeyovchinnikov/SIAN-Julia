@@ -18,6 +18,13 @@ or
 ```zsh
 > ]add git@github.com:alexeyovchinnikov/SIAN-Julia.git
 ```
+
+### Scoping
+
+Once the module is imported via `using SIAN`, the following functions are available immediately via the `export` of the module: `@ODEmodel, identifiability_ode`.
+
+Other SIAN functions are available via prefix call, such as `SIAN.<any_function_name>`.
+
 ## Implementation of SIAN in Julia
 
 The algorithm is based on the following papers:

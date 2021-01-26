@@ -26,7 +26,7 @@ ode = @ODEmodel(
     y6(t) = x7(t)
 )
 
-ode = set_parameter_values(ode, OrderedDict(
+ode = SIAN.set_parameter_values(ode, OrderedDict(
     a1 => Nemo.QQ(1, 2),
     a2 => Nemo.QQ(1, 5),
     a3 => Nemo.QQ(1),
