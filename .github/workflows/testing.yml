@@ -1,6 +1,5 @@
 name: "SIAN Tests for Julia"
 on:
-  pull_request:
   push:
     branches:
       - main
