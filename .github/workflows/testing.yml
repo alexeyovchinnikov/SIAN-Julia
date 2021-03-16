@@ -26,6 +26,5 @@ jobs:
       - run: julia -e 'import Pkg; Pkg.add("Pkg"); Pkg.activate("."); Pkg.update()' 
       - run: pwd
       - run: ls -a
-      - run: julia -e 'import Pkg; Pkg.add("Pkg"); Pkg.activate("."); P
-kg.update(); Pkg.test()'  
+      - run: julia -e 'import Pkg; Pkg.add("Pkg"); Pkg.activate("."); Pkg.update(); Pkg.test()'
       #- uses: julia-actions/julia-runtest@latest
