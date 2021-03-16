@@ -14,7 +14,7 @@ jobs:
     strategy:
       matrix:
         julia-version: ['1.5.3'] 
-        os: [macos-latest, ubuntu-latest]
+        os: [macos-latest]
 
     steps:
       - uses: actions/checkout@v2
@@ -24,4 +24,5 @@ jobs:
       - run: julia -e 'import Pkg; Pkg.add("Pkg")'
       - uses: julia-actions/julia-buildpkg@latest
       - run: julia -e 'import Pkg; Pkg.add("Pkg"); Pkg.activate("."); Pkg.update()' 
+      - run: pwd
       - uses: julia-actions/julia-runtest@latest
