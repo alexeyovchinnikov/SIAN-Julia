@@ -13,21 +13,17 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        julia-version: ["1.5.3"]
-        julia-arch: [x64, x86]
+        julia-version: ['1.5.3'] 
         os: [macos-latest, ubuntu-latest]
 
     steps:
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@latest
         with:
-          version: ${{ matrix.julia-version }}
-          arch: ${{ matrix.julia-arch }}
+          version: ${{ matrix.julia-version }} 
       - uses: julia-actions/julia-buildpkg@latest
         with:
-          version: ${{ matrix.julia-version }}
-          arch: ${{ matrix.julia-arch }}
+          version: ${{ matrix.julia-version }} 
       - uses: julia-actions/julia-runtest@latest
         with:
           version: ${{ matrix.julia-version }}
-          arch: ${{ matrix.julia-arch }}
