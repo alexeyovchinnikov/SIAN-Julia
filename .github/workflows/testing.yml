@@ -23,4 +23,5 @@ jobs:
           version: ${{ matrix.julia-version }} 
       - run: julia -e 'import Pkg; Pkg.add("Pkg")'
       - uses: julia-actions/julia-buildpkg@latest
+      - run: julia -e 'import Pkg; Pkg.add("Pkg"); Pkg.activate("."); Pkg.update()' 
       - uses: julia-actions/julia-runtest@latest
