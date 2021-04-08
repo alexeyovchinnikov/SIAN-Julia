@@ -19,9 +19,50 @@ or
 > ]add git@github.com:alexeyovchinnikov/SIAN-Julia.git
 ```
 
-### Scoping
+## Example: getting started
 
-Once the module is imported via `using SIAN`, the following functions are available immediately via the `export` of the module: `@ODEmodel, identifiability_ode`.
+In this example we would like to consider the following simple non-linear ODE system:
+```
+x1'(t) = r1*x1(t)*(1 - x1(t)/k1 + x2(t)/k2),
+x2'(t) = r2*x2(t)*(1 - x1(t)/k1 + x2(t)/k2)
+y(t) = x1(t)
+```
+
+To this end, we can run:
+```julia
+using SIAN
+
+ode = @ODEmodel(
+    x1'(t) = r1*x1(t)*(1 - x1(t)/k1 + x2(t)/k2),
+    x2'(t) = r2*x2(t)*(1 - x1(t)/k1 + x2(t)/k2),
+    y(t) = x1(t)
+);
+
+output = identifiability_ode(ode, get_parameters(ode));
+```
+
+The last command prints the following:
+```
+Solving the problem
+Constructing the maximal system
+Truncating
+Assessing local identifiability
+Locally identifiable parameters: [r1, k1, r2, x1]
+Not identifiable parameters:     [k2, x2]
+Randomizing
+GB computation
+Remainder computation
+
+=== Summary ===
+Globally identifiable parameters:                 [x1, k1, r1, r2]
+Locally but not globally identifiable parameters: []
+Not identifiable parameters:                      [k2, x2]
+===============
+```
+
+## Scoping
+
+Once the module is imported via `using SIAN`, the following functions are available immediately via the `export` of the module: `@ODEmodel, identifiability_ode, get_parameters`.
 
 Other SIAN functions are available via prefix call, such as `SIAN.<any_function_name>`.
 
