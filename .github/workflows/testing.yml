@@ -24,5 +24,5 @@ jobs:
           arch: ${{ matrix.julia-arch }} 
       - name: "Build Package"
         uses: julia-actions/julia-buildpkg@v1
-      - name: "Run tests"
-        uses: julia-actions/julia-runtest@latest
+      # - name: "Run tests"
+        # uses: julia-actions/julia-runtest@latest
