@@ -60,15 +60,15 @@ uuid = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 
 [[DocStringExtensions]]
 deps = ["LibGit2", "Markdown", "Pkg", "Test"]
-git-tree-sha1 = "50ddf44c53698f5e784bbebb3f4b21c5807401b1"
+git-tree-sha1 = "9d4f64f79012636741cf01133158a54b24924c32"
 uuid = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
-version = "0.8.3"
+version = "0.8.4"
 
 [[FLINT_jll]]
 deps = ["Artifacts", "GMP_jll", "JLLWrappers", "Libdl", "MPFR_jll", "Pkg"]
-git-tree-sha1 = "648891e837baafba25dd81a129fbef9b1f191d47"
+git-tree-sha1 = "a44041a4e8e592530952bbce5b68102bcbe7c3b4"
 uuid = "e134572f-a0d5-539d-bddf-3cad8db41a82"
-version = "200.700.0+0"
+version = "200.700.100+0"
 
 [[GAP]]
 deps = ["GAP_jll", "GAP_lib_jll", "Libdl", "Markdown", "Pkg", "REPL", "Random"]
@@ -158,9 +158,9 @@ uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [[LoadFlint]]
 deps = ["BinaryProvider", "FLINT_jll", "GMP_jll", "Libdl", "MPFR_jll", "Pkg"]
-git-tree-sha1 = "46f13846aef516148d48ec8a708a1055530d6856"
+git-tree-sha1 = "272bd4807361427f1e237ea15993c12ae945a6b1"
 uuid = "472f376f-f1cf-461b-9ac1-d103423be9b7"
-version = "0.5.0"
+version = "0.5.1"
 
 [[Logging]]
 uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
@@ -407,15 +407,15 @@ version = "0.8.5+1"
 
 [[libpolymake_julia_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Pkg", "libcxxwrap_julia_jll", "polymake_jll"]
-git-tree-sha1 = "ee5ee6cca1a31f4d8afa86bbb5a5a135a0f566fc"
+git-tree-sha1 = "8a6152e7a5c4f713c671040cf91edabe0ea9dc6e"
 uuid = "4d8266f6-2b3b-57e3-ad7a-d431eaaac945"
-version = "0.4.5+0"
+version = "0.4.105+0"
 
 [[libsingular_julia_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg", "Singular_jll", "libcxxwrap_julia_jll"]
-git-tree-sha1 = "c6d231ece6e0d90c63c9862cd3249edb3a054800"
+git-tree-sha1 = "4e3fd753d7ff88753dd0ac673f84befda1f6f94c"
 uuid = "ae4fbd8f-ecdb-54f8-bbce-35570499b30e"
-version = "0.9.105+0"
+version = "0.9.205+0"
 
 [[lrslib_jll]]
 deps = ["Artifacts", "GMP_jll", "JLLWrappers", "Libdl", "Pkg"]
@@ -437,9 +437,9 @@ version = "300.800.901+0"
 
 [[polymake_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "FLINT_jll", "GMP_jll", "JLLWrappers", "Libdl", "MPFR_jll", "PPL_jll", "Perl_jll", "Pkg", "bliss_jll", "boost_jll", "cddlib_jll", "lrslib_jll", "normaliz_jll"]
-git-tree-sha1 = "3bf841a6aab7aa10474f13dffce150176ae802b2"
+git-tree-sha1 = "885d701ac17dc56446cb83685fec7e3b43c5a2e4"
 uuid = "7c209550-9012-526c-9264-55ba7a78ba2c"
-version = "400.300.0+1"
+version = "400.300.1+0"
 
 [[snappy_jll]]
 deps = ["Artifacts", "JLLWrappers", "LZO_jll", "Libdl", "Pkg", "Zlib_jll"]
