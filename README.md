@@ -32,7 +32,11 @@ To this end, we can run:
 ```julia
 using SIAN
 
-ode = @ODEmodel(x1'(t) = r1*x1(t)*(1 - x1(t)/k1 + x2(t)/k2),x2'(t) = r2*x2(t)*(1 - x1(t)/k1 + x2(t)/k2),y(t) = x1(t));
+ode = @ODEmodel(
+    x1'(t) = r1*x1(t)*(1 - x1(t)/k1 + x2(t)/k2),
+    x2'(t) = r2*x2(t)*(1 - x1(t)/k1 + x2(t)/k2),
+    y(t) = x1(t)
+);
 
 output = identifiability_ode(ode, get_parameters(ode));
 ```
