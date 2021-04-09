@@ -15,6 +15,7 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 TestSetExtensions = "98d24dd4-01ad-11ea-1b02-c9a08f80db04"
 
 [compat]
+julia = "1.5, 1.6"
 GroebnerBasis = "0.1, 0.2, 0.3"
 MacroTools = "0.5.6"
 OrderedCollections = "1.3"
