@@ -23,8 +23,8 @@ or
 
 In this example we would like to consider the following simple non-linear ODE system:
 ```
-x1'(t) = r1*x1(t)*(1 - x1(t)/k1 + x2(t)/k2),
-x2'(t) = r2*x2(t)*(1 - x1(t)/k1 + x2(t)/k2)
+x1'(t) = r1 * x1(t) * (1 - x1(t) / k1 + x2(t) / k2),
+x2'(t) = r2 * x2(t) * (1 - x1(t) / k1 + x2(t) / k2),
 y(t) = x1(t)
 ```
 
@@ -33,8 +33,8 @@ To this end, we can run:
 using SIAN
 
 ode = @ODEmodel(
-    x1'(t) = r1*x1(t)*(1 - x1(t)/k1 + x2(t)/k2),
-    x2'(t) = r2*x2(t)*(1 - x1(t)/k1 + x2(t)/k2),
+    x1'(t) = r1 * x1(t) * (1 - x1(t) / k1 + x2(t) / k2),
+    x2'(t) = r2 * x2(t) * (1 - x1(t) / k1 + x2(t) / k2),
     y(t) = x1(t)
 );
 
