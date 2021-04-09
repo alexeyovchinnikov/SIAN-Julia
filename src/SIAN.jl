@@ -217,8 +217,10 @@ Perform identifiability check for a given `ode` system with respect to parameter
   - `p` - probability of correctness, default `0.99`.
   - `p_mod` - a prime characteristic, default `0`.
   - `nthrds` - number of threads for concurrency, default `1`.
+  - `infolevel` - an integer, controls the verbosity of Groebner Basis computation, default `0` (no output).
+                 See GroebnerBasis.jl documentation for details.
 """
-function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, nthrds=1)
+function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, nthrds=1, infolevel=0)
 
     println("Solving the problem")
 
@@ -438,9 +440,9 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, nthrds=1)
 
         theta_g = Array{spoly}(undef, 0)    
         Et_hat = [parent_ring_change(e, Rjet_new) for e in Et_hat]
-        gb = GroebnerBasis.f4(Ideal(Rjet_new, vcat(Et_hat, parent_ring_change(z_aux * Q_hat, Rjet_new) - 1)), nthrds=nthrds)
+        gb = GroebnerBasis.f4(Ideal(Rjet_new, vcat(Et_hat, parent_ring_change(z_aux * Q_hat, Rjet_new) - 1)), nthrds=nthrds, infolevel=infolevel)
         println("Remainder computation")
-        
+       
         if p_mod > 0
             theta_l_new = [parent_ring_change(_reduce_poly_mod_p(th, p_mod), Rjet_new) for th in theta_l]
     
