@@ -1,6 +1,5 @@
 name: "SIAN Tests for Julia"
 on:
-  pull_request:
   push:
     paths-ignore:
     - 'README.md'
@@ -26,3 +25,4 @@ jobs:
       - name: "Build Package"
         uses: julia-actions/julia-buildpkg@v1
       # - name: "Run tests"
+        # uses: julia-actions/julia-runtest@latest
