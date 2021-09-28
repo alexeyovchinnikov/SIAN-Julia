@@ -205,11 +205,23 @@ end
 
 function identifiability_ode(ode::ModelingToolkit.ODESystem, params_to_assess=[]; p=0.99, p_mod=0, nthrds=1)
     ode_prep, input_syms, gens_ = PreprocessODE(ode)
+    t = ModelingToolkit.arguments(ModelingToolkit.states(ode)[1])[1]
     if length(params_to_assess)==0
-        params_to_assess = SIAN.get_parameters(ode_prep)
+        params_to_assess_ = SIAN.get_parameters(ode_prep)
+        nemo2mtk = Dict(gens_.=>input_syms)
+    else
+        params_to_assess_ = [eval_at_nemo(each, Dict(syms.=>gens_)) for each in params_to_assess]
+        nemo2mtk = Dict(params_to_assess_.=>params_to_assess)
     end
 
-    return identifiability_ode(ode_prep, params_to_assess; p=p, p_mod=p_mod, nthrds=1)
+    res = identifiability_ode(ode_prep, params_to_assess_; p=p, p_mod=p_mod, nthrds=1)
+
+    @info "Post-Processing: Converting Nemo output to ModelingToolkit types"
+    out = Dict()
+    for (id_type, pars) in pairs(res)
+        out[id_type] = [substitute(nemo2mtk[each], t=>0) for each in pars]
+    end
+    return out 
 end
 
 """
