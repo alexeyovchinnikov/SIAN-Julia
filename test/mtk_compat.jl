@@ -32,13 +32,13 @@
     
     @test_throws ArgumentError identifiability_ode(de )
     # ----------
-    @parameters a b c 
-    @variables t x1(t) x2(t) y(t) [output = true]
-    D = Differential(t)
+    # @parameters a b c 
+    # @variables t x1(t) x2(t) y(t) [output = true]
+    # D = Differential(t)
 
-    eqs = [D(x1) ~ -a * x1 + x2 * b / (x1 + b / (c^2 - x2)), D(x2) ~ x2 * c^2 + x1, y ~ x2]
-    de = ODESystem(eqs, t, name=:Test)
-    correct = Dict(a => :globally, b => :globally, c => :locally)
-    to_check = [a, b, c]
+    # eqs = [D(x1) ~ -a * x1 + x2 * b / (x1 + b / (c^2 - x2)), D(x2) ~ x2 * c^2 + x1, y ~ x2]
+    # de = ODESystem(eqs, t, name=:Test)
+    # correct = Dict(a => :globally, b => :globally, c => :locally)
+    # to_check = [a, b, c]
     # @test isequal(correct, assess_identifiability(de, to_check))
 end
