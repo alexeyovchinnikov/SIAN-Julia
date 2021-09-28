@@ -156,7 +156,7 @@ macro ODEmodel(ex::Expr...)
     vars_list = :([$(all_symb...)])
     R = gensym()
     vars_aux = gensym()
-    exp_ring = :(($R, $vars_aux) = Nemo.PolynomialRing(Nemo.QQ, map(string, $all_symb)))
+    exp_ring = :(($R, $vars_aux) = SIAN.Nemo.PolynomialRing(SIAN.Nemo.QQ, map(string, $all_symb)))
     assignments = [:($(all_symb[i]) = $vars_aux[$i]) for i in 1:length(all_symb)]
     
     # preparing equations
@@ -164,8 +164,8 @@ macro ODEmodel(ex::Expr...)
     x_dict = gensym()
     y_dict = gensym()
     y_vars = Array{Any}(undef, 0)
-    x_dict_create_expr = :($x_dict = OrderedDict{fmpq_mpoly,Union{fmpq_mpoly,Generic.Frac{fmpq_mpoly}}}())
-    y_dict_create_expr = :($y_dict = OrderedDict{fmpq_mpoly,Union{fmpq_mpoly,Generic.Frac{fmpq_mpoly}}}())
+    x_dict_create_expr = :($x_dict = Dict{SIAN.Nemo.fmpq_mpoly,Union{SIAN.Nemo.fmpq_mpoly,SIAN.Nemo.Generic.Frac{SIAN.Nemo.fmpq_mpoly}}}())
+    y_dict_create_expr = :($y_dict = Dict{SIAN.Nemo.fmpq_mpoly,Union{SIAN.Nemo.fmpq_mpoly,SIAN.Nemo.Generic.Frac{SIAN.Nemo.fmpq_mpoly}}}())
     eqs_expr = []
     for eq in equations
         if eq.head != :(=)
@@ -198,7 +198,7 @@ macro ODEmodel(ex::Expr...)
     print("Outputs: [", join(map(string, y_vars), ", "), "]\n")
    
     # creating the ode object
-    ode_expr = :(ODE{fmpq_mpoly}($x_dict, $y_dict, Array{fmpq_mpoly}([$(u_vars...)])))
+    ode_expr = :(ODE{SIAN.Nemo.fmpq_mpoly}($x_dict, $y_dict, Array{SIAN.Nemo.fmpq_mpoly}([$(u_vars...)])))
     
     result = Expr(
         :block, 
