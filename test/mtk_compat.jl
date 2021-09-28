@@ -8,7 +8,7 @@
     de = ODESystem(eqs, t, name=:Test)
     correct = Dict(
         "nonidentifiable" => [a12, a21, substitute(x1, t=>0), a01], 
-        "locally_not_globally" => [], 
+        "locally_not_globally" => Num[], 
         "globally" => [substitute(x0, t=>0)]
     )
     @test isequal(correct, identifiability_ode(de))
