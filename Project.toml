@@ -17,7 +17,6 @@ TestSetExtensions = "98d24dd4-01ad-11ea-1b02-c9a08f80db04"
 
 [compat]
 GroebnerBasis = "0.1, 0.2, 0.3"
-ModelingToolkit = "6"
 MacroTools = "0.5"
 Nemo = "0.22, 0.24, 0.25, 0.26, 0.27"
 OrderedCollections = "1.3"
