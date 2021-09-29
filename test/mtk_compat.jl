@@ -11,7 +11,10 @@
         "locally_not_globally" => Num[], 
         "globally" => [substitute(x0, t=>0)]
     )
-    @test isequal(correct, identifiability_ode(de))
+    output = identifiability_ode(de)
+    @test isequal(correct["nonidentifiable"], output["nonidentifiable"])
+    @test isequal(correct["locally_not_globally"], output["locally_not_globally"])
+    @test isequal(correct["globally"], output["globally"])
 
     # --------------------------------------------------------------------------
         # # --------------------------------------------------------------------------
