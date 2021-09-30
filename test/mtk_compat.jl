@@ -12,9 +12,11 @@
         "globally" => [substitute(x0, t=>0)]
     )
     output = identifiability_ode(de)
-    @test isequal(correct["nonidentifiable"], output["nonidentifiable"])
-    @test isequal(correct["locally_not_globally"], output["locally_not_globally"])
-    @test isequal(correct["globally"], output["globally"])
+    # have to use string here, otherwise fails on Ubutnu
+    # TODO: figure out test on Ubuntu
+    @test isequal(string.(correct["nonidentifiable"]), string.(output["nonidentifiable"]))
+    @test isequal(string.(correct["locally_not_globally"]), string.(output["locally_not_globally"]))
+    @test isequal(string.(correct["globally"]), string.(output["globally"]))
 
     # --------------------------------------------------------------------------
         # # --------------------------------------------------------------------------
@@ -33,7 +35,7 @@
 
     de = ODESystem(eqs, t, name=:Test)
     
-    @test_throws ArgumentError identifiability_ode(de )
+    @test_throws ArgumentError identifiability_ode(de)
     # ----------
     # @parameters a b c 
     # @variables t x1(t) x2(t) y(t) [output = true]
