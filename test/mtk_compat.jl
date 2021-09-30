@@ -14,9 +14,9 @@
     output = identifiability_ode(de)
     # have to use string here, otherwise fails on Ubutnu
     # TODO: figure out test on Ubuntu
-    @test isequal(string.(correct["nonidentifiable"]), string.(output["nonidentifiable"]))
-    @test isequal(string.(correct["locally_not_globally"]), string.(output["locally_not_globally"]))
-    @test isequal(string.(correct["globally"]), string.(output["globally"]))
+    @test isequal(Set(correct["nonidentifiable"]), Set(output["nonidentifiable"]))
+    @test isequal(Set(correct["locally_not_globally"]), Set(output["locally_not_globally"]))
+    @test isequal(Set(correct["globally"]), Set(output["globally"]))
 
     # --------------------------------------------------------------------------
         # # --------------------------------------------------------------------------
