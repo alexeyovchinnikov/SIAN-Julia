@@ -3,17 +3,16 @@
 
 struct ODE{P}
     poly_ring::MPolyRing
-    x_vars::Array{P,1}
-    y_vars::Array{P,1}
-    u_vars::Array{P,1}
-    parameters::Array{P,1}
-    x_equations::OrderedDict{P,<: Union{P,Generic.Frac{P}}}
-    y_equations::OrderedDict{P,<: Union{P,Generic.Frac{P}}}
-    
+    x_vars::Array{P, 1}
+    y_vars::Array{P, 1}
+    u_vars::Array{P, 1}
+    parameters::Array{P, 1}
+    x_equations::Dict{P, <: Union{P, Generic.Frac{P}}}
+    y_equations::Dict{P, <: Union{P, Generic.Frac{P}}}
     function ODE{P}(
-            x_eqs::OrderedDict{P,<: Union{P,Generic.Frac{P}}}, 
-            y_eqs::OrderedDict{P,<: Union{P,Generic.Frac{P}}},    
-            inputs::Array{P,1}
+            x_eqs::Dict{P, <: Union{P, Generic.Frac{P}}}, 
+            y_eqs::Dict{P, <: Union{P, Generic.Frac{P}}},    
+            inputs::Array{P, 1}
         ) where {P <: MPolyElem{<: FieldElem}}
         # Initialize ODE
         # x_eqs is a dictionary x_i => f_i(x, u, params)
@@ -21,11 +20,16 @@ struct ODE{P}
 
         num, den = unpack_fraction(collect(values(x_eqs))[1])
         poly_ring = parent(num)
+        if !all(isascii.(string.(gens(poly_ring))))
+            nonascii_chars = filter(g->!isascii(g), string.(gens(poly_ring)))
+            st = join(nonascii_chars, ", ")
+            @warn "Non-ascii characters are not supported by Singular: " * st
+        end
         x_vars = collect(keys(x_eqs))
         y_vars = collect(keys(y_eqs))
         u_vars = inputs
         parameters = filter(v -> (!(v in x_vars) && !(v in u_vars) && !(v in y_vars)), gens(poly_ring))
-        new(poly_ring, x_vars, y_vars, u_vars, parameters, x_eqs, y_eqs)
+        new{P}(poly_ring, x_vars, y_vars, u_vars, parameters, x_eqs, y_eqs)
     end
 end
 
@@ -152,7 +156,7 @@ macro ODEmodel(ex::Expr...)
     vars_list = :([$(all_symb...)])
     R = gensym()
     vars_aux = gensym()
-    exp_ring = :(($R, $vars_aux) = Nemo.PolynomialRing(Nemo.QQ, map(string, $all_symb)))
+    exp_ring = :(($R, $vars_aux) = SIAN.Nemo.PolynomialRing(SIAN.Nemo.QQ, map(string, $all_symb)))
     assignments = [:($(all_symb[i]) = $vars_aux[$i]) for i in 1:length(all_symb)]
     
     # preparing equations
@@ -160,8 +164,8 @@ macro ODEmodel(ex::Expr...)
     x_dict = gensym()
     y_dict = gensym()
     y_vars = Array{Any}(undef, 0)
-    x_dict_create_expr = :($x_dict = OrderedDict{fmpq_mpoly,Union{fmpq_mpoly,Generic.Frac{fmpq_mpoly}}}())
-    y_dict_create_expr = :($y_dict = OrderedDict{fmpq_mpoly,Union{fmpq_mpoly,Generic.Frac{fmpq_mpoly}}}())
+    x_dict_create_expr = :($x_dict = Dict{SIAN.Nemo.fmpq_mpoly,Union{SIAN.Nemo.fmpq_mpoly,SIAN.Nemo.Generic.Frac{SIAN.Nemo.fmpq_mpoly}}}())
+    y_dict_create_expr = :($y_dict = Dict{SIAN.Nemo.fmpq_mpoly,Union{SIAN.Nemo.fmpq_mpoly,SIAN.Nemo.Generic.Frac{SIAN.Nemo.fmpq_mpoly}}}())
     eqs_expr = []
     for eq in equations
         if eq.head != :(=)
@@ -194,7 +198,7 @@ macro ODEmodel(ex::Expr...)
     print("Outputs: [", join(map(string, y_vars), ", "), "]\n")
    
     # creating the ode object
-    ode_expr = :(ODE{fmpq_mpoly}($x_dict, $y_dict, Array{fmpq_mpoly}([$(u_vars...)])))
+    ode_expr = :(ODE{SIAN.Nemo.fmpq_mpoly}($x_dict, $y_dict, Array{SIAN.Nemo.fmpq_mpoly}([$(u_vars...)])))
     
     result = Expr(
         :block, 
@@ -266,4 +270,32 @@ end
 
 # ------------------------------------------------------------------------------
 
-
+function PreprocessODE(de::ModelingToolkit.ODESystem)
+    @info "Preproccessing `ModelingToolkit.ODESystem` object"
+    diff_eqs = filter(eq->!(ModelingToolkit.isoutput(eq.lhs)), ModelingToolkit.equations(de))
+    out_eqs = filter(eq->(ModelingToolkit.isoutput(eq.lhs)), ModelingToolkit.equations(de))
+    y_functions = [each.lhs for each in out_eqs]
+    inputs = filter(v->ModelingToolkit.isinput(v), ModelingToolkit.states(de))
+    state_vars = filter(s->!(ModelingToolkit.isinput(s) || ModelingToolkit.isoutput(s)), ModelingToolkit.states(de))
+    params = ModelingToolkit.parameters(de) 
+    
+    input_symbols = vcat(state_vars, y_functions, inputs, params)
+    generators = string.(input_symbols)
+    generators = map(g->replace(g, "(t)"=>""), generators)
+    R, gens_ = Nemo.PolynomialRing(Nemo.QQ, generators)
+    state_eqn_dict = Dict{SIAN.Nemo.fmpq_mpoly,Union{SIAN.Nemo.fmpq_mpoly,SIAN.Nemo.Generic.Frac{fmpq_mpoly}}}()
+    out_eqn_dict = Dict{SIAN.Nemo.fmpq_mpoly,Union{SIAN.Nemo.fmpq_mpoly,SIAN.Nemo.Generic.Frac{fmpq_mpoly}}}()
+    
+    for i in 1:length(diff_eqs)
+        state_eqn_dict[substitute(state_vars[i], input_symbols.=>gens_)] = eval_at_nemo(diff_eqs[i].rhs, Dict(input_symbols.=>gens_))
+    end
+    for i in 1:length(out_eqs)
+        out_eqn_dict[substitute(y_functions[i], input_symbols.=> gens_)] = eval_at_nemo(out_eqs[i].rhs, Dict(input_symbols.=>gens_))
+    end
+    
+    inputs_ = [substitute(each,  input_symbols .=> gens_) for each in inputs]
+    if isequal(length(inputs_), 0)
+        inputs_ = Vector{SIAN.Nemo.fmpq_mpoly}()
+    end
+    return (ODE{SIAN.Nemo.fmpq_mpoly}(state_eqn_dict, out_eqn_dict, inputs_), input_symbols, gens_)
+end

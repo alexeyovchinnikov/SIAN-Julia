@@ -2,6 +2,7 @@ using Test
 using TestSetExtensions
 
 using SIAN
+using ModelingToolkit
 
 @info "Testing started"
 
