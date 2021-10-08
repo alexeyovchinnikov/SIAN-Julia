@@ -1,6 +1,6 @@
 module SIAN
 
-using Oscar
+using Nemo
 using LinearAlgebra
 using Singular
 using GroebnerBasis
