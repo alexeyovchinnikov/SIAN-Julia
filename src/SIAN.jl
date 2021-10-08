@@ -1,6 +1,7 @@
 module SIAN
 
 using Nemo
+using StructuralIdentifiability: PreprocessODE, eval_at_nemo
 using LinearAlgebra
 using Singular
 using GroebnerBasis
