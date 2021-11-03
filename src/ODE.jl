@@ -3,16 +3,16 @@
 
 struct ODE{P}
     poly_ring::MPolyRing
-    x_vars::Array{P, 1}
-    y_vars::Array{P, 1}
-    u_vars::Array{P, 1}
-    parameters::Array{P, 1}
-    x_equations::Dict{P, <: Union{P, Generic.Frac{P}}}
-    y_equations::Dict{P, <: Union{P, Generic.Frac{P}}}
+    x_vars::Array{P,1}
+    y_vars::Array{P,1}
+    u_vars::Array{P,1}
+    parameters::Array{P,1}
+    x_equations::Dict{P,<: Union{P,Generic.Frac{P}}}
+    y_equations::Dict{P,<: Union{P,Generic.Frac{P}}}
     function ODE{P}(
-            x_eqs::Dict{P, <: Union{P, Generic.Frac{P}}}, 
-            y_eqs::Dict{P, <: Union{P, Generic.Frac{P}}},    
-            inputs::Array{P, 1}
+            x_eqs::Dict{P,<: Union{P,Generic.Frac{P}}}, 
+            y_eqs::Dict{P,<: Union{P,Generic.Frac{P}}},    
+            inputs::Array{P,1}
         ) where {P <: MPolyElem{<: FieldElem}}
         # Initialize ODE
         # x_eqs is a dictionary x_i => f_i(x, u, params)
@@ -21,7 +21,7 @@ struct ODE{P}
         num, den = unpack_fraction(collect(values(x_eqs))[1])
         poly_ring = parent(num)
         if !all(isascii.(string.(gens(poly_ring))))
-            nonascii_chars = filter(g->!isascii(g), string.(gens(poly_ring)))
+            nonascii_chars = filter(g -> !isascii(g), string.(gens(poly_ring)))
             st = join(nonascii_chars, ", ")
             @warn "Non-ascii characters are not supported by Singular: " * st
         end
