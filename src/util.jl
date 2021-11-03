@@ -122,7 +122,11 @@ function parent_ring_change(poly::MPolyElem, new_ring::MPolyRing)
                 end
             end
         end
-        push_term!(builder, new_ring.base_ring(coef), new_exp)
+        if typeof(coef) <: Nemo.fmpq
+            push_term!(builder, new_ring.base_ring(coef), new_exp)
+        else 
+            push_term!(builder, new_ring.base_ring(Nemo.data(coef)), new_exp)
+        end
     end
     return finish(builder)
 end

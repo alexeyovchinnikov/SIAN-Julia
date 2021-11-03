@@ -447,8 +447,7 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, nthrds=1, i
         
         # 4. Determine.
         println("GB computation")  
-
-        
+ 
         if p_mod > 0 
             Et_hat = [_reduce_poly_mod_p(e, p_mod) for e in Et_hat]
             z_aux = _reduce_poly_mod_p(z_aux, p_mod)
