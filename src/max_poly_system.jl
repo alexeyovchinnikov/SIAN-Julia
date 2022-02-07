@@ -1,4 +1,4 @@
-function get_equations(ode::SIAN.ODE{P}) where {P<:Nemo.MPolyElem{Nemo.fmpq}}
+function get_equations(ode::SIAN.ODE{P}) where {P<:Nemo.MPolyElem{Nemo.fmpq_mpoly}}
     non_jet_ring = ode.poly_ring
     all_indets = Nemo.gens(non_jet_ring)
     x_vars = ode.x_vars
