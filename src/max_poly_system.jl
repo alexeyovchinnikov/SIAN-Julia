@@ -28,5 +28,5 @@ function get_equations(ode)
     eqs = vcat(x_eqs, y_eqs)
     Q = foldl(lcm, [SIAN.unpack_fraction(ex[2])[2] for ex in eqs])
 
-    return eqs, Q, x_eqs, y_eqs, x_vars, y_vars, u_vars, mu, gens_Rjet
+    return eqs, Q, x_eqs, y_eqs, x_vars, y_vars, u_vars, mu, all_indets, gens_Rjet
 end
