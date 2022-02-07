@@ -13,7 +13,6 @@ function get_equations(ode::SIAN.ODE{P}) where {P<:Nemo.MPolyElem{Nemo.fmpq}}
 
     Rjet = SIAN.create_jet_ring(vcat(x_vars, y_vars, u_vars), mu, s + 2)
     gens_Rjet = Nemo.gens(Rjet)
-    z_aux = gens_Rjet[end-length(mu)]
 
     x_eqs = Array{Array{Nemo.AbstractAlgebra.RingElem,1},1}(undef, n)
     y_eqs = Array{Array{Nemo.AbstractAlgebra.RingElem,1},1}(undef, m)

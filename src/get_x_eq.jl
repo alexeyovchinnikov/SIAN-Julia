@@ -1,4 +1,4 @@
-function get_x_eq(x_eqs::Vector{Vector{Nemo.AbstractAlgebra.RingElem}}, y_eqs::Vector{Vector{Nemo.AbstractAlgebra.RingElem}}, n::Int, m::Int, u::Int, gens_Rjet)
+function get_x_eq(x_eqs::Vector{Vector{Nemo.AbstractAlgebra.RingElem}}, y_eqs::Vector{Vector{Nemo.AbstractAlgebra.RingElem}}, n::Int, m::Int, s::Int, u::Int, gens_Rjet)
     X = Array{Nemo.fmpq_poly}(undef, 0)
     X_eq = Array{Nemo.fmpq_poly}(undef, 0)
     for i in 1:n
