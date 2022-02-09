@@ -313,19 +313,4 @@ function identifiability_ode(ode::ModelingToolkit.ODESystem, params_to_assess = 
     return out
 end
 
-function make_substitution(f::P, var_sub::P, val_numer::P, val_denom::P) where {P<:MPolyElem}
-    d = Nemo.degree(f, var_sub)
-
-    result = 0
-    @debug "Substitution in a polynomial of degree $d"
-    flush(stdout)
-    for i in 0:d
-        @debug "\t Degree $i"
-        flush(stdout)
-        result += coeff(f, [var_sub], [i]) * (val_numer^i) * (val_denom^(d - i))
-        @debug "\t Intermediate result of size $(length(result))"
-    end
-    return result
-end
-
 end
