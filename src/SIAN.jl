@@ -1,7 +1,7 @@
 module SIAN
 
 using Nemo
-using StructuralIdentifiability: PreprocessODE, eval_at_nemo
+using StructuralIdentifiability: PreprocessODE, eval_at_nemo, make_substitution
 using LinearAlgebra
 using Singular
 using GroebnerBasis
@@ -15,6 +15,7 @@ include("max_poly_system.jl")
 include("get_x_eq.jl")
 include("get_y_eq.jl")
 include("sample_point.jl")
+include("get_weights.jl")
 
 export identifiability_ode, PreprocessODE
 export @ODEmodel
@@ -43,7 +44,7 @@ Perform identifiability check for a given `ode` system with respect to parameter
                  See GroebnerBasis.jl documentation for details.
 """
 
-function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds = 1, infolevel = 0)
+function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds = 1, infolevel = 0, weighted_ordering = false)
 
     println("Solving the problem")
 
@@ -187,6 +188,10 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
         println("Locally identifiable parameters: [", join([SIAN.get_order_var(th, non_jet_ring)[1] for th in theta_l], ", "), "]")
         println("Not identifiable parameters:     [", join([SIAN.get_order_var(th, non_jet_ring)[1] for th in setdiff(params_to_assess_, theta_l)], ", "), "]")
 
+        non_identifiable_parameters = Set(SIAN.get_order_var(th, non_jet_ring)[1] for th in setdiff(params_to_assess_, theta_l))
+        if weighted_ordering
+            weights = SIAN.get_weights(ode, non_identifiable_parameters)
+        end
         # 3. Randomize.
         println("Randomizing")
         # (a) ------------
@@ -207,6 +212,19 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
         Q_hat = evaluate(Q, u_hat[1], u_hat[2])
         vrs_sorted = vcat(sort([e for e in Et_x_vars], lt = (x, y) -> SIAN.compare_diff_var(x, y, all_indets, n + m + u, s)), z_aux, sort(not_int_cond_params, rev = true))
 
+        # assign weights to variables
+        if weighted_ordering
+            for i in 1:length(Et_hat)
+                for _var in vars(Et_hat[i])
+                    _var_non_jet, _var_order = SIAN.get_order_var(_var, non_jet_ring)
+                    Et_hat[i] = make_substitution(Et_hat[i], _var, _var^get(weights, _var_non_jet, 1), parent(_var)(1))
+                end
+            end
+            for _var in vars(Q_hat)
+                _var_non_jet, _var_order = SIAN.get_order_var(_var, non_jet_ring)
+                Q_hat = make_substitution(Q_hat, _var, _var^get(weights, _var_non_jet, 1), parent(_var)(1))
+            end
+        end
         # 4. Determine.
         println("GB computation")
 
@@ -222,6 +240,17 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
         theta_g = Array{spoly}(undef, 0)
         Et_hat = [SIAN.parent_ring_change(e, Rjet_new) for e in Et_hat]
         gb = GroebnerBasis.f4(Ideal(Rjet_new, vcat(Et_hat, SIAN.parent_ring_change(z_aux * Q_hat, Rjet_new) - 1)), nthrds = nthrds, infolevel = infolevel)
+        # TODO: Backsubstitution!
+        gb_gens = Singular.gens(gb)
+        if weighted_ordering
+            for i in 1:length(gb_gens)
+                for (idx, _var) in enumerate(vars(gb_gens[i]))
+                    _var_non_jet, _var_order = SIAN.get_order_var(_var, non_jet_ring)
+                    gb_gens[i] = Singular.substitute_variable(gb_gens[i], idx, _var / _var^(max(degree(gb_gens[i], _var) - get(weights, _var_non_jet, 1), 1)))
+                    # gb_gens[i] = make_substitution(gb_gens[i], _var, _var // _var^get(weights, _var_non_jet, 1), parent(_var)(1))
+                end
+            end
+        end
         println("Remainder computation")
 
         if p_mod > 0
@@ -284,5 +313,19 @@ function identifiability_ode(ode::ModelingToolkit.ODESystem, params_to_assess = 
     return out
 end
 
+function make_substitution(f::P, var_sub::P, val_numer::P, val_denom::P) where {P<:MPolyElem}
+    d = Nemo.degree(f, var_sub)
+
+    result = 0
+    @debug "Substitution in a polynomial of degree $d"
+    flush(stdout)
+    for i in 0:d
+        @debug "\t Degree $i"
+        flush(stdout)
+        result += coeff(f, [var_sub], [i]) * (val_numer^i) * (val_denom^(d - i))
+        @debug "\t Intermediate result of size $(length(result))"
+    end
+    return result
+end
 
 end
