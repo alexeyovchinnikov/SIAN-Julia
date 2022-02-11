@@ -44,7 +44,7 @@ Perform identifiability check for a given `ode` system with respect to parameter
                  See GroebnerBasis.jl documentation for details.
 """
 
-function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds = 1, infolevel = 0, weighted_ordering = false)
+function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds = 1, infolevel = 0, weighted_ordering = false, local_only = false)
 
     println("Solving the problem")
 
@@ -189,6 +189,11 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
         println("Not identifiable parameters:     [", join([SIAN.get_order_var(th, non_jet_ring)[1] for th in setdiff(params_to_assess_, theta_l)], ", "), "]")
 
         non_identifiable_parameters = Set(SIAN.get_order_var(th, non_jet_ring)[1] for th in setdiff(params_to_assess_, theta_l))
+
+        if local_only
+            return Dict("non_identifiable" => non_identifiable_parameters, "locally_identifiable" => theta_l)
+        end
+
         if weighted_ordering
             weights = SIAN.get_weights(ode, non_identifiable_parameters)
         end
@@ -240,24 +245,15 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
         theta_g = Array{spoly}(undef, 0)
         Et_hat = [SIAN.parent_ring_change(e, Rjet_new) for e in Et_hat]
         gb = GroebnerBasis.f4(Ideal(Rjet_new, vcat(Et_hat, SIAN.parent_ring_change(z_aux * Q_hat, Rjet_new) - 1)), nthrds = nthrds, infolevel = infolevel)
-        # TODO: Backsubstitution!
-        gb_gens = Singular.gens(gb)
-        if weighted_ordering
-            for i in 1:length(gb_gens)
-                for (idx, _var) in enumerate(vars(gb_gens[i]))
-                    _var_non_jet, _var_order = SIAN.get_order_var(_var, non_jet_ring)
-                    gb_gens[i] = Singular.substitute_variable(gb_gens[i], idx, _var / _var^(max(degree(gb_gens[i], _var) - get(weights, _var_non_jet, 1), 1)))
-                    # gb_gens[i] = make_substitution(gb_gens[i], _var, _var // _var^get(weights, _var_non_jet, 1), parent(_var)(1))
-                end
-            end
-        end
+
         println("Remainder computation")
 
         if p_mod > 0
             theta_l_new = [SIAN.parent_ring_change(SIAN._reduce_poly_mod_p(th, p_mod), Rjet_new) for th in theta_l]
 
             for i in 1:length(theta_l)
-                if Singular.reduce(theta_l_new[i], gb) == SIAN.parent_ring_change(SIAN._reduce_poly_mod_p(Rjet(theta_hat[2][findfirst(isequal(theta_l[i]), theta_hat[1])]), p_mod), Rjet_new)
+                _var_non_jet, _var_order = SIAN.get_order_var(theta_l_new[i], non_jet_ring)
+                if Singular.reduce(theta_l_new[i]^get(weights, _var_non_jet, 1), gb) == SIAN.parent_ring_change(SIAN._reduce_poly_mod_p(Rjet(theta_hat[2][findfirst(isequal(theta_l[i]), theta_hat[1])]), p_mod), Rjet_new)
                     theta_g = vcat(theta_g, theta_l_new[i])
                 end
             end
@@ -265,7 +261,8 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
             theta_l_new = [SIAN.parent_ring_change(th, Rjet_new) for th in theta_l]
 
             for i in 1:length(theta_l)
-                if Singular.reduce(theta_l_new[i], gb) == SIAN.parent_ring_change(Rjet(theta_hat[2][findfirst(isequal(theta_l[i]), theta_hat[1])]), Rjet_new)
+                _var_non_jet, _var_order = SIAN.get_order_var(theta_l_new[i], non_jet_ring)
+                if Singular.reduce(theta_l_new[i]^get(weights, _var_non_jet, 1), gb) == SIAN.parent_ring_change(Rjet(theta_hat[2][findfirst(isequal(theta_l[i]), theta_hat[1])]), Rjet_new)
                     theta_g = vcat(theta_g, theta_l_new[i])
                 end
             end
@@ -286,7 +283,7 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
 end
 
 
-function identifiability_ode(ode::ModelingToolkit.ODESystem, params_to_assess = []; p = 0.99, p_mod = 0, nthrds = 1)
+function identifiability_ode(ode::ModelingToolkit.ODESystem, params_to_assess = []; p = 0.99, p_mod = 0, nthrds = 1, infolevel = 0, weighted_ordering = false, local_only = false)
     if any(ModelingToolkit.isoutput(eq.lhs) for eq in ModelingToolkit.equations(ode))
         # @info "Measured quantities are not provided, trying to find the outputs in input ODE."
         measured_quantities = filter(eq -> (ModelingToolkit.isoutput(eq.lhs)), ModelingToolkit.equations(ode))
@@ -303,7 +300,7 @@ function identifiability_ode(ode::ModelingToolkit.ODESystem, params_to_assess = 
         nemo2mtk = Dict(params_to_assess_ .=> params_to_assess)
     end
 
-    res = identifiability_ode(ode_prep, params_to_assess_; p = p, p_mod = p_mod, nthrds = 1)
+    res = identifiability_ode(ode_prep, params_to_assess_; p = p, p_mod = p_mod, nthrds = nthrds, infolevel = infolevel, weighted_ordering = weighted_ordering, local_only = local_only)
 
     @info "Post-Processing: Converting Nemo output to ModelingToolkit types"
     out = Dict()

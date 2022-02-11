@@ -77,7 +77,7 @@ function get_weights(ode, non_identifiable_parameters)
     end
     weights = Dict{fmpq_mpoly,Int64}()
     max_level = current_level - 1
-    # TODO: filter non-identifiable parameters
+    weights[z_aux] = minimum(3, max_level + 1)
     for (level, states) in visible_states
         for st in states
             if st in x_vars
