@@ -8,7 +8,7 @@
 
     for i in 1:length(Et_hat)
         for _var in SIAN.Nemo.vars(Et_hat[i])
-            Et_hat[i] = make_substitution(Et_hat[i], _var, _var^get(weights, _var, 1), parent(_var)(1))
+            Et_hat[i] = SIAN.StrucrturalIdentifiability.make_substitution(Et_hat[i], _var, _var^get(weights, _var, 1), parent(_var)(1))
         end
     end
 
