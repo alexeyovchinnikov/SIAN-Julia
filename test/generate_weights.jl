@@ -12,7 +12,8 @@
     result = SIAN.identifiability_ode(ode, SIAN.get_parameters(ode); local_only = true)
 
     weights = SIAN.get_weights(ode, result["non_identifiable"])
-    @test all(maple_weights[string(k)] == weights[k] for k in keys(weights))
+    @test all(get(maple_weights, string(k), 1) == weights[k] for k in keys(weights))
+    @test all(weights[k] == 1 for k in keys(weights) if !(string(k) in keys(maple_weights)))
 
     @info "Cholera"
     ode = @ODEmodel(
@@ -27,9 +28,10 @@
     param2str = Dict(string(p) => p for p in vcat(ode.parameters, ode.x_vars, ode.y_vars))
     maple_weights = Dict("dz" => 3, "z_aux" => 2, "r" => 1, "w" => 2, "i" => 1, "s" => 1, "al" => 3)
 
-    res = identifiability_ode(ode, get_parameters(ode); local_only = true)
+    result = identifiability_ode(ode, get_parameters(ode); local_only = true)
     weights = SIAN.get_weights(ode, result["non_identifiable"])
-    @test all(maple_weights[string(k)] == weights[k] for k in keys(weights))
+    @test all(get(maple_weights, string(k), 1) == weights[k] for k in keys(weights))
+    @test all(weights[k] == 1 for k in keys(weights) if !(string(k) in keys(maple_weights)))
 
     @info "SIR_R₀"
     ode = @ODEmodel(
@@ -43,9 +45,10 @@
     param2str = Dict(string(p) => p for p in vcat(ode.parameters, ode.x_vars, ode.y_vars))
     maple_weights = Dict("z_aux" => 1, "In" => 1, "S" => 2)
 
-    res = identifiability_ode(ode, get_parameters(ode); local_only = true)
+    result = identifiability_ode(ode, get_parameters(ode); local_only = true)
     weights = SIAN.get_weights(ode, result["non_identifiable"])
-    @test all(maple_weights[string(k)] == weights[k] for k in keys(weights))
+    @test all(get(maple_weights, string(k), 1) == weights[k] for k in keys(weights))
+    @test all(weights[k] == 1 for k in keys(weights) if !(string(k) in keys(maple_weights)))
 
     @info "Lipolysis"
 
@@ -60,9 +63,10 @@
         y3(t) = x4(t)
     )
     param2str = Dict(string(p) => p for p in vcat(ode.parameters, ode.x_vars, ode.y_vars))
-    maple_weights = Dict("k3" => 3, "x2" => 1, "x1" => 1, "z_aux" = 2, "x3" => 1, "x5" => 2)
+    maple_weights = Dict("k3" => 3, "x2" => 1, "x1" => 1, "z_aux" => 2, "x3" => 1, "x5" => 2)
 
-    res = identifiability_ode(ode, get_parameters(ode); local_only = true)
+    result = identifiability_ode(ode, get_parameters(ode); local_only = true)
     weights = SIAN.get_weights(ode, result["non_identifiable"])
-    @test all(maple_weights[string(k)] == weights[k] for k in keys(weights))
+    @test all(get(maple_weights, string(k), 1) == weights[k] for k in keys(weights))
+    @test all(weights[k] == 1 for k in keys(weights) if !(string(k) in keys(maple_weights)))
 end
