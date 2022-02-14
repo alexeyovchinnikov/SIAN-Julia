@@ -193,7 +193,7 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
         if local_only
             return Dict("non_identifiable" => non_identifiable_parameters, "locally_identifiable" => theta_l)
         end
-
+        weights = Dict()
         if weighted_ordering
             weights = SIAN.get_weights(ode, non_identifiable_parameters)
         end
