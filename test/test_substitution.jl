@@ -10,7 +10,7 @@
             Et_hat[i] = SIAN.make_substitution(Et_hat[i], _var, _var^get(weights, _var, 1), parent(_var)(1))
         end
     end
-    @test all(Et_hat_sub[i] == Et_hat[i] for i ∈ 1:length(Et_hat))
+    @test all(Et_hat_sub[i] == Et_hat[i] for i ∈ 1:length(Et_hat)) == true
 
     @info "Case 2"
     R, (x, y, z, a, b, c) = SIAN.Nemo.PolynomialRing(SIAN.Nemo.QQ, [:x, :y, :z, :a, :b, :c])
@@ -22,7 +22,7 @@
             Et_hat[i] = SIAN.make_substitution(Et_hat[i], _var, _var^get(weights, _var, 1), parent(_var)(1))
         end
     end
-    @test all(Et_hat_sub[i] == Et_hat[i] for i ∈ 1:length(Et_hat))
+    @test all(Et_hat_sub[i] == Et_hat[i] for i ∈ 1:length(Et_hat)) == true
 
     @info "Case 3"
     R, (x, y, z) = SIAN.Nemo.PolynomialRing(SIAN.Nemo.QQ, [:x, :y, :z, :a, :b])
@@ -34,6 +34,6 @@
             Et_hat[i] = SIAN.make_substitution(Et_hat[i], _var, _var^get(weights, _var, 1), parent(_var)(1))
         end
     end
-    @test all(Et_hat_sub[i] == Et_hat[i] for i ∈ 1:length(Et_hat))
+    @test all(Et_hat_sub[i] == Et_hat[i] for i ∈ 1:length(Et_hat)) == true
 
 end
