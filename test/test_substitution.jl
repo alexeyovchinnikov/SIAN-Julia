@@ -21,12 +21,9 @@
     weights = Dict(x => 1, a => 2, z => 5)
     for i in 1:length(Et_hat)
         for _var in Set(SIAN.Nemo.vars(Et_hat[i]))
-            println(_var, Et_hat[i])
             Et_hat[i] = make_substitution(Et_hat[i], _var, _var^get(weights, _var, 1), parent(_var)(1))
-            println(_var, Et_hat[i])
         end
     end
-
     @test all(Et_hat_sub[i] == Et_hat[i] for i ∈ 1:length(Et_hat))
 
     @info "Case 3"
@@ -37,9 +34,7 @@
     weights = Dict(x => 2, y => 2, z => 3)
     for i in 1:length(Et_hat)
         for _var in Set(SIAN.Nemo.vars(Et_hat[i]))
-            println(_var, Et_hat[i])
             Et_hat[i] = make_substitution(Et_hat[i], _var, _var^get(weights, _var, 1), parent(_var)(1))
-            println(_var, Et_hat[i])
         end
     end
     @test all(Et_hat_sub[i] == Et_hat[i] for i ∈ 1:length(Et_hat))
