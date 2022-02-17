@@ -81,7 +81,10 @@
     for case in test_cases
         ode = case[1]
         result = identifiability_ode(ode, get_parameters(ode); nthrds = 1, weighted_ordering = true)
+        result_no_weights = identifiability_ode(ode, get_parameters(ode); nthrds = 1, weighted_ordering = false)
+
         @test case[2] == result
+        @test case[2] == result_no_weights
     end
 
 end
