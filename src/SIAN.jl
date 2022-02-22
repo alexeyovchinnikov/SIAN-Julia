@@ -184,6 +184,7 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
         println("Globally identifiable parameters:                 []")
         println("Locally but not globally identifiable parameters: []")
         println("Not identifiable parameters:                      [", join(params_to_assess, ", "), "]")
+        return Dict("locally_identifiable" => [], "globally_identifiable" => [], "non_identifiable" => Set(SIAN.get_order_var(th, non_jet_ring)[1] for th in params_to_assess))
     else
         println("Locally identifiable parameters: [", join([SIAN.get_order_var(th, non_jet_ring)[1] for th in theta_l], ", "), "]")
         println("Not identifiable parameters:     [", join([SIAN.get_order_var(th, non_jet_ring)[1] for th in setdiff(params_to_assess_, theta_l)], ", "), "]")
