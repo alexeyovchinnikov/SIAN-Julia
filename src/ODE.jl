@@ -7,11 +7,11 @@ struct ODE{P}
     y_vars::Array{P,1}
     u_vars::Array{P,1}
     parameters::Array{P,1}
-    x_equations::Dict{P,<: Union{P,Generic.Frac{P}}}
-    y_equations::Dict{P,<: Union{P,Generic.Frac{P}}}
+    x_equations::AbstractDict{P,<: Union{P,Generic.Frac{P}}}
+    y_equations::AbstractDict{P,<: Union{P,Generic.Frac{P}}}
     function ODE{P}(
-            x_eqs::Dict{P,<: Union{P,Generic.Frac{P}}}, 
-            y_eqs::Dict{P,<: Union{P,Generic.Frac{P}}},    
+            x_eqs::AbstractDict{P,<: Union{P,Generic.Frac{P}}}, 
+            y_eqs::AbstractDict{P,<: Union{P,Generic.Frac{P}}},    
             inputs::Array{P,1}
         ) where {P <: MPolyElem{<: FieldElem}}
         # Initialize ODE
