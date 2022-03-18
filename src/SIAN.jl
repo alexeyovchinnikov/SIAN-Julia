@@ -190,7 +190,7 @@ Retrieve parameters from the `ode` system. Retrieve initial conditions if `initi
 ## Output
         - Array of parameters (and initial conditions).
 """
-function get_parameters(ode; initial_conditions = true)
+function get_parameters(ode; initial_conditions=true)
   if initial_conditions
     return vcat(ode.parameters, ode.x_vars)
   else
@@ -203,7 +203,7 @@ end
 # ------------------------------------------------------------------------------
 #
 
-function identifiability_ode(ode::ModelingToolkit.ODESystem, params_to_assess = []; p = 0.99, p_mod = 0, nthrds = 1)
+function identifiability_ode(ode::ModelingToolkit.ODESystem, params_to_assess=[]; p=0.99, p_mod=0, nthrds=1)
   if any(ModelingToolkit.isoutput(eq.lhs) for eq in ModelingToolkit.equations(ode))
     # @info "Measured quantities are not provided, trying to find the outputs in input ODE."
     measured_quantities = filter(eq -> (ModelingToolkit.isoutput(eq.lhs)), ModelingToolkit.equations(ode))
@@ -220,7 +220,7 @@ function identifiability_ode(ode::ModelingToolkit.ODESystem, params_to_assess = 
     nemo2mtk = Dict(params_to_assess_ .=> params_to_assess)
   end
 
-  res = identifiability_ode(ode_prep, params_to_assess_; p = p, p_mod = p_mod, nthrds = 1)
+  res = identifiability_ode(ode_prep, params_to_assess_; p=p, p_mod=p_mod, nthrds=1)
 
   @info "Post-Processing: Converting Nemo output to ModelingToolkit types"
   out = Dict()
@@ -245,7 +245,7 @@ Perform identifiability check for a given `ode` system with respect to parameter
   - `infolevel` - an integer, controls the verbosity of Groebner Basis computation, default `0` (no output).
                  See GroebnerBasis.jl documentation for details.
 """
-function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds = 1, infolevel = 0)
+function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, nthrds=1, infolevel=0)
 
   @info "Solving the problem"
 
@@ -425,11 +425,11 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
     @info "\n=== Summary ==="
     @info "Globally identifiable parameters:                 []"
     @info "Locally but not globally identifiable parameters: []"
-    @info "Not identifiable parameters:                      [", join(params_to_assess, ", "), "]"
+    @info "Not identifiable parameters:                      [$(join(params_to_assess, ', '))]"
     return Dict("locally_identifiable" => [], "globally_identifiable" => [], "non_identifiable" => Set(SIAN.get_order_var(th, non_jet_ring)[1] for th in params_to_assess))
   else
-    @info "Locally identifiable parameters: [", join([get_order_var(th, non_jet_ring)[1] for th in theta_l], ", "), "]"
-    @info "Not identifiable parameters:     [", join([get_order_var(th, non_jet_ring)[1] for th in setdiff(params_to_assess, theta_l)], ", "), "]"
+    @info "Locally identifiable parameters: [$(join([get_order_var(th, non_jet_ring)[1] for th in theta_l], ", "))]"
+    @info "Not identifiable parameters:     [$(join([get_order_var(th, non_jet_ring)[1] for th in setdiff(params_to_assess, theta_l)], ", "))]"
 
     # 3. Randomize.
     @info "Randomizing"
@@ -449,7 +449,7 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
       Et_x_vars = union(Et_x_vars, get_vars(poly, x_vars, all_indets, n + m + u, s))
     end
     Q_hat = evaluate(Q, u_hat[1], u_hat[2])
-    vrs_sorted = vcat(sort([e for e in Et_x_vars], lt = (x, y) -> compare_diff_var(x, y, all_indets, n + m + u, s)), z_aux, sort(not_int_cond_params, rev = true))
+    vrs_sorted = vcat(sort([e for e in Et_x_vars], lt=(x, y) -> compare_diff_var(x, y, all_indets, n + m + u, s)), z_aux, sort(not_int_cond_params, rev=true))
 
     # 4. Determine.
     @info "GB computation"
@@ -458,14 +458,14 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
       Et_hat = [_reduce_poly_mod_p(e, p_mod) for e in Et_hat]
       z_aux = _reduce_poly_mod_p(z_aux, p_mod)
       Q_hat = _reduce_poly_mod_p(Q_hat, p_mod)
-      Rjet_new, vrs_sorted = Singular.PolynomialRing(Singular.Fp(p_mod), [string(v) for v in vrs_sorted], ordering = :degrevlex)
+      Rjet_new, vrs_sorted = Singular.PolynomialRing(Singular.Fp(p_mod), [string(v) for v in vrs_sorted], ordering=:degrevlex)
     else
-      Rjet_new, vrs_sorted = Singular.PolynomialRing(Singular.QQ, [string(v) for v in vrs_sorted], ordering = :degrevlex)
+      Rjet_new, vrs_sorted = Singular.PolynomialRing(Singular.QQ, [string(v) for v in vrs_sorted], ordering=:degrevlex)
     end
 
     theta_g = Array{spoly}(undef, 0)
     Et_hat = [parent_ring_change(e, Rjet_new) for e in Et_hat]
-    gb = GroebnerBasis.f4(Ideal(Rjet_new, vcat(Et_hat, parent_ring_change(z_aux * Q_hat, Rjet_new) - 1)), nthrds = nthrds, infolevel = infolevel)
+    gb = GroebnerBasis.f4(Ideal(Rjet_new, vcat(Et_hat, parent_ring_change(z_aux * Q_hat, Rjet_new) - 1)), nthrds=nthrds, infolevel=infolevel)
     @info "Remainder computation"
 
     if p_mod > 0
@@ -491,10 +491,10 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
       "locally_not_globally" => Set([get_order_var(th, non_jet_ring)[1] for th in setdiff(theta_l_new, theta_g)]),
       "nonidentifiable" => Set([get_order_var(th, non_jet_ring)[1] for th in setdiff(params_to_assess, theta_l)])
     )
-    @info "\n=== Summary ==="
-    @info "Globally identifiable parameters:                 [", join(result["globally"], ", "), "]"
-    @info "Locally but not globally identifiable parameters: [", join(result["locally_not_globally"], ", "), "]"
-    @info "Not identifiable parameters:                      [", join(result["nonidentifiable"], ", "), "]"
+    @info "=== Summary ==="
+    @info "Globally identifiable parameters:                 [$(join(result['globally'], ', '))]"
+    @info "Locally but not globally identifiable parameters: [$(join(result['locally_not_globally'], ', '))]"
+    @info "Not identifiable parameters:                      [$(join(result['nonidentifiable'], ', '))]"
     @info "==============="
     return result
   end
