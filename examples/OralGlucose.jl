@@ -1,6 +1,5 @@
-using SIAN
-
-println("Setting up the problem")
+using SIAN, Logging
+@info "Setting up the problem"
 
 ode = @ODEmodel(
   G'(t) = -(p1 + X(t)) * G(t) + p1 * Gb(t) + v * R(t),
@@ -11,8 +10,8 @@ ode = @ODEmodel(
   y1(t) = G(t),
   y2(t) = Ib(t),
   y3(t) = Gb(t)
-)          
+)
 
-res = identifiability_ode(ode, get_parameters(ode); p=0.99, p_mod=0, nthrds=1)
+res = identifiability_ode(ode, get_parameters(ode); p = 0.99, p_mod = 0, nthrds = 1)
 
 println(res)
