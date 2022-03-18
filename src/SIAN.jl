@@ -422,10 +422,10 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, nthrds=1, i
   end
 
   if length(theta_l) == 0
-    @info "\n=== Summary ==="
+    @info "=== Summary ==="
     @info "Globally identifiable parameters:                 []"
     @info "Locally but not globally identifiable parameters: []"
-    @info "Not identifiable parameters:                      [$(join(params_to_assess, ', '))]"
+    @info "Not identifiable parameters:                      [$(join(params_to_assess, ", "))]"
     return Dict("locally_identifiable" => [], "globally_identifiable" => [], "non_identifiable" => Set(SIAN.get_order_var(th, non_jet_ring)[1] for th in params_to_assess))
   else
     @info "Locally identifiable parameters: [$(join([get_order_var(th, non_jet_ring)[1] for th in theta_l], ", "))]"
@@ -492,9 +492,9 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, nthrds=1, i
       "nonidentifiable" => Set([get_order_var(th, non_jet_ring)[1] for th in setdiff(params_to_assess, theta_l)])
     )
     @info "=== Summary ==="
-    @info "Globally identifiable parameters:                 [$(join(result['globally'], ', '))]"
-    @info "Locally but not globally identifiable parameters: [$(join(result['locally_not_globally'], ', '))]"
-    @info "Not identifiable parameters:                      [$(join(result['nonidentifiable'], ', '))]"
+    @info "Globally identifiable parameters:                 [$(join(result["globally"], ", "))]"
+    @info "Locally but not globally identifiable parameters: [$(join(result["locally_not_globally"], ", "))]"
+    @info "Not identifiable parameters:                      [$(join(result["nonidentifiable"], ", "))]"
     @info "==============="
     return result
   end
