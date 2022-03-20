@@ -1,6 +1,5 @@
-using SIAN
-
-println("Setting up the problem")
+using SIAN, Logging
+@info "Setting up the problem"
 
 ode = @ODEmodel(
   xA'(t) = -k1 * xA(t),
@@ -14,7 +13,7 @@ ode = @ODEmodel(
   y4(t) = eC(t)
 )
 
-res = identifiability_ode(ode, get_parameters(ode); p=0.99, p_mod=0, nthrds=1)
+res = identifiability_ode(ode, get_parameters(ode); p = 0.99, p_mod = 0, nthrds = 1)
 
 
 
@@ -26,6 +25,6 @@ println(res)
 
 r = 2
 
-res = identifiability_ode(SIAN.generate_replica(ode, r), get_parameters(ode; initial_conditions=false); p=0.99, p_mod=0, nthrds=1)
+res = identifiability_ode(SIAN.generate_replica(ode, r), get_parameters(ode; initial_conditions = false); p = 0.99, p_mod = 0, nthrds = 1)
 
 println(res)

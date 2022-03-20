@@ -8,7 +8,7 @@ using GroebnerBasis
 using MacroTools
 using OrderedCollections
 using ModelingToolkit
-using Logging # * for the @warn macro
+using Logging
 include("util.jl")
 include("ODE.jl")
 include("max_poly_system.jl")
@@ -46,12 +46,68 @@ Perform identifiability check for a given `ode` system with respect to parameter
 
 function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds = 1, infolevel = 0, weighted_ordering = false, local_only = false)
 
-    println("Solving the problem")
+  @info "Solving the problem"
 
-    if p_mod != 0
-        @warn "Using `p_mod!=0` does not guarantee the same probability of correctness but allows to run the program faster. This warning was raised by `p_mod = $p_mod`."
+  if p_mod != 0
+    @warn "Using `p_mod!=0` does not guarantee the same probability of correctness but allows to run the program faster. This warning was raised by `p_mod = $p_mod`."
+  end
+  # 1.Construct the maximal system
+
+  # (a) ---------------
+
+  @info "Constructing the maximal system"
+
+  non_jet_ring = ode.poly_ring
+  all_indets = gens(non_jet_ring)
+  x_vars = ode.x_vars
+  y_vars = ode.y_vars
+  u_vars = ode.u_vars
+  mu = ode.parameters
+
+  n = length(x_vars)
+  m = length(y_vars)
+  u = length(u_vars)
+  s = length(mu) + n
+
+  Rjet = create_jet_ring(vcat(x_vars, y_vars, u_vars), mu, s + 2)
+  gens_Rjet = gens(Rjet)
+  z_aux = gens_Rjet[end-length(mu)]
+  x_eqs = collect(values(ode.x_equations))
+  y_eqs = collect(values(ode.y_equations))
+
+  x_eqs = [[add_to_var(x_vars[i], Rjet, 1), add_zero_to_vars(unpack_fraction(x_eqs[i])[1], Rjet) // add_zero_to_vars(unpack_fraction(x_eqs[i])[2], Rjet)] for i in 1:n]
+  y_eqs = [[add_to_var(y_vars[i], Rjet, 0), add_zero_to_vars(unpack_fraction(y_eqs[i])[1], Rjet) // add_zero_to_vars(unpack_fraction(y_eqs[i])[2], Rjet)] for i in 1:m]
+
+  eqs = vcat(x_eqs, y_eqs)
+  Q = foldl(lcm, [unpack_fraction(ex[2])[2] for ex in eqs])
+
+  not_int_cond_params = gens_Rjet[(end-length(ode.parameters)+1):end]
+  all_params = vcat(not_int_cond_params, gens_Rjet[1:n])
+  x_variables = gens_Rjet[1:n]
+  for i in 1:(s+1)
+    x_variables = vcat(x_variables, gens_Rjet[(i*(n+m+u)+1):(i*(n+m+u)+n)])
+  end
+  u_variables = gens_Rjet[(n+m+1):(n+m+u)]
+  for i in 1:(s+1)
+    u_variables = vcat(u_variables, gens_Rjet[((n+m+u)*i+n+m+1):((n+m+u)*(i+1))])
+  end
+
+  # (b,c) -------------
+  X = Array{fmpq_poly}(undef, 0)
+  X_eq = Array{fmpq_poly}(undef, 0)
+  for i in 1:n
+    X = vcat(X, [Array{fmpq_poly}(undef, 0)])
+    poly_d = unpack_fraction(x_eqs[i][1] - x_eqs[i][2])[1]
+    for j in 0:s+1
+      if j > 0
+        poly_d = differentiate_all(poly_d, gens_Rjet, n + m + u, j)
+      end
+      leader = gens_Rjet[i+(n+m+u)*(j+1)]
+      separant = derivative(poly_d, leader)
+      X[i] = vcat(X[i], poly_d)
+      X_eq = vcat(X_eq, [[leader, -(poly_d - separant * leader) // separant]])
     end
-    # 1.Construct the maximal system
+  end
 
     # (a) ---------------
 
@@ -78,6 +134,7 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
     for i in 1:(s+1)
         u_variables = vcat(u_variables, gens_Rjet[((n+m+u)*i+n+m+1):((n+m+u)*(i+1))])
     end
+  end
 
     # (b,c) -------------
     X, X_eq = SIAN.get_x_eq(x_eqs, y_eqs, n, m, s, u, gens_Rjet)
@@ -85,20 +142,30 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
     # (d,e) -----------
     Y, Y_eq = SIAN.get_y_eq(x_eqs, y_eqs, n, m, s, u, gens_Rjet)
 
-    # 2.Truncate
-    println("Truncating")
+  @info "Assessing local identifiability"
 
     # (a) -----------------------
     d0 = BigInt(maximum(vcat([total_degree(SIAN.unpack_fraction(Q * eq[2])[1]) for eq in eqs], total_degree(Q))))
 
-    # (b) -----------------------  
-    D1 = floor(BigInt, (length(params_to_assess) + 1) * 2 * d0 * s * (n + 1) * (1 + 2 * d0 * s) / (1 - p))
+  theta_l = Array{fmpq_mpoly}(undef, 0)
+  params_to_assess = [add_to_var(param, Rjet, 0) for param in params_to_assess]
+  Et_eval_base = [evaluate(e, vcat(u_hat[1], y_hat[1]), vcat(u_hat[2], y_hat[2])) for e in Et]
+  for param_0 in params_to_assess
+    other_params = [v for v in x_theta_vars if v != param_0]
+    Et_subs = [evaluate(e, [param_0], [evaluate(param_0, all_x_theta_vars_subs)]) for e in Et_eval_base]
+    JacX = jacobi_matrix(Et_subs, other_params, all_x_theta_vars_subs)
+    if LinearAlgebra.rank(JacX) != max_rank
+      theta_l = vcat(theta_l, param_0)
+    end
+  end
 
     # (c, d) ---------------
     sample = SIAN.sample_point(D1, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq, Q)
     all_subs = sample[4]
     u_hat = sample[2]
     y_hat = sample[1]
+    u_hat = sample[2]
+    theta_hat = sample[3]
 
     # (e) ------------------
     alpha = [1 for i in 1:n]
@@ -148,8 +215,11 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
             end
         end
     end
+    Q_hat = evaluate(Q, u_hat[1], u_hat[2])
+    vrs_sorted = vcat(sort([e for e in Et_x_vars], lt=(x, y) -> compare_diff_var(x, y, all_indets, n + m + u, s)), z_aux, sort(not_int_cond_params, rev=true))
 
-    println("Assessing local identifiability")
+    # 4. Determine.
+    @info "GB computation"
 
     max_rank = length(Et)
     for i in 1:m
@@ -281,6 +351,42 @@ function identifiability_ode(ode, params_to_assess; p = 0.99, p_mod = 0, nthrds 
         println("===============")
         return result
     end
+
+    theta_g = Array{spoly}(undef, 0)
+    Et_hat = [parent_ring_change(e, Rjet_new) for e in Et_hat]
+    gb = GroebnerBasis.f4(Ideal(Rjet_new, vcat(Et_hat, parent_ring_change(z_aux * Q_hat, Rjet_new) - 1)), nthrds=nthrds, infolevel=infolevel)
+    @info "Remainder computation"
+
+    if p_mod > 0
+      theta_l_new = [parent_ring_change(_reduce_poly_mod_p(th, p_mod), Rjet_new) for th in theta_l]
+
+      for i in 1:length(theta_l)
+        if Singular.reduce(theta_l_new[i], gb) == parent_ring_change(_reduce_poly_mod_p(Rjet(theta_hat[2][findfirst(isequal(theta_l[i]), theta_hat[1])]), p_mod), Rjet_new)
+          theta_g = vcat(theta_g, theta_l_new[i])
+        end
+      end
+    else
+      theta_l_new = [parent_ring_change(th, Rjet_new) for th in theta_l]
+
+      for i in 1:length(theta_l)
+        if Singular.reduce(theta_l_new[i], gb) == parent_ring_change(Rjet(theta_hat[2][findfirst(isequal(theta_l[i]), theta_hat[1])]), Rjet_new)
+          theta_g = vcat(theta_g, theta_l_new[i])
+        end
+      end
+
+    end
+    result = Dict(
+      "globally" => Set([get_order_var(th, non_jet_ring)[1] for th in theta_g]),
+      "locally_not_globally" => Set([get_order_var(th, non_jet_ring)[1] for th in setdiff(theta_l_new, theta_g)]),
+      "nonidentifiable" => Set([get_order_var(th, non_jet_ring)[1] for th in setdiff(params_to_assess, theta_l)])
+    )
+    @info "=== Summary ==="
+    @info "Globally identifiable parameters:                 [$(join(result["globally"], ", "))]"
+    @info "Locally but not globally identifiable parameters: [$(join(result["locally_not_globally"], ", "))]"
+    @info "Not identifiable parameters:                      [$(join(result["nonidentifiable"], ", "))]"
+    @info "==============="
+    return result
+  end
 end
 
 

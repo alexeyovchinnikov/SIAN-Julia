@@ -1,6 +1,5 @@
-using SIAN
-
-println("Setting up the problem")
+using SIAN, Logging
+@info "Setting up the problem"
 
 ode = @ODEmodel(
   x1'(t) = a1 * (x2(t) - x1(t)) - (ka * n * x1(t)) / (kc * ka + kc * x3(t) + ka * x1(t)),
