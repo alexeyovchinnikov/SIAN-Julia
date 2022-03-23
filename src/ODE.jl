@@ -191,11 +191,11 @@ macro ODEmodel(ex::Expr...)
 
     u_vars = setdiff(io_vars, y_vars)
     params = setdiff(all_symb, union(x_vars, y_vars, u_vars))
-    @info "Summary of the model:\n"
-    @info "State variables: [", join(map(string, x_vars), ", "), "]\n"
-    @info "Parameter: [", join(map(string, params), ", "), "]\n"
-    @info "Inputs: [", join(map(string, u_vars), ", "), "]\n"
-    @info "Outputs: [", join(map(string, y_vars), ", "), "]\n"
+    @info "Summary of the model:"
+    @info "State variables: [$(join(map(string, x_vars), ", "))]"
+    @info "Parameter: [$(join(map(string, params), ", "))]"
+    @info "Inputs: [$(join(map(string, u_vars), ", "))]"
+    @info "Outputs: [$(join(map(string, y_vars), ", "))]"
 
     # creating the ode object
     ode_expr = :(ODE{SIAN.Nemo.fmpq_mpoly}($x_dict, $y_dict, Array{SIAN.Nemo.fmpq_mpoly}([$(u_vars...)])))
