@@ -38,7 +38,7 @@ Retrieve parameters from the `ode` system. Retrieve initial conditions if `initi
 ## Output
         - Array of parameters (and initial conditions).
 """
-function get_parameters(ode; initial_conditions = true)
+function get_parameters(ode; initial_conditions=true)
     if initial_conditions
         return vcat(ode.parameters, ode.x_vars)
     else
@@ -252,7 +252,7 @@ function parent_ring_change(poly::MPolyElem, new_ring::MPolyRing)
         )
     end
     builder = MPolyBuildCtx(new_ring)
-    for term in zip(exponent_vectors(poly), coeffs(poly))
+    for term in zip(exponent_vectors(poly), coefficients(poly))
         exp, coef = term
         new_exp = [0 for _ in gens(new_ring)]
         for i in 1:length(exp)
