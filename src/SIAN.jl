@@ -3,8 +3,8 @@ module SIAN
 using Nemo
 using StructuralIdentifiability: PreprocessODE, eval_at_nemo, make_substitution
 using LinearAlgebra
-using Singular
-using GroebnerBasis
+
+using Groebner
 using MacroTools
 using OrderedCollections
 using ModelingToolkit
@@ -20,7 +20,7 @@ include("get_weights.jl")
 export identifiability_ode, PreprocessODE
 export @ODEmodel
 export ODE
-export Nemo, OrderedDict, Generic, macroexpand, macrohelper_extract_vars, macrohelper_clean, fmpq_mpoly, get_parameters
+export OrderedDict, Generic, macroexpand, macrohelper_extract_vars, macrohelper_clean, fmpq_mpoly, get_parameters
 
 
 # ------------------------------------------------------------------------------
@@ -238,15 +238,16 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, nthrds=1, i
       Et_hat = [SIAN._reduce_poly_mod_p(e, p_mod) for e in Et_hat]
       z_aux = SIAN._reduce_poly_mod_p(z_aux, p_mod)
       Q_hat = SIAN._reduce_poly_mod_p(Q_hat, p_mod)
-      Rjet_new, vrs_sorted = Singular.PolynomialRing(Singular.Fp(p_mod), [string(v) for v in vrs_sorted], ordering=:degrevlex)
+      Rjet_new, vrs_sorted = Nemo.PolynomialRing(Nemo.GF(p_mod), [string(v) for v in vrs_sorted], ordering=:degrevlex)
     else
-      Rjet_new, vrs_sorted = Singular.PolynomialRing(Singular.QQ, [string(v) for v in vrs_sorted], ordering=:degrevlex)
+      Rjet_new, vrs_sorted = Nemo.PolynomialRing(Nemo.QQ, [string(v) for v in vrs_sorted], ordering=:degrevlex)
     end
 
-    theta_g = Array{spoly}(undef, 0)
-    Et_hat = [SIAN.parent_ring_change(e, Rjet_new) for e in Et_hat]
-    gb = GroebnerBasis.f4(Ideal(Rjet_new, vcat(Et_hat, SIAN.parent_ring_change(z_aux * Q_hat, Rjet_new) - 1)), nthrds=nthrds, infolevel=infolevel)
 
+    Et_hat = [SIAN.parent_ring_change(e, Rjet_new) for e in Et_hat]
+    gb = groebner(vcat(Et_hat, SIAN.parent_ring_change(z_aux * Q_hat, Rjet_new) - 1))
+    #(Ideal(Rjet_new, ), nthrds=nthrds, infolevel=infolevel)
+    theta_g = Array{Any}(undef, 0)
     @info "Remainder computation"
 
     if p_mod > 0
@@ -254,7 +255,7 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, nthrds=1, i
 
       for i in 1:length(theta_l)
         _var_non_jet, _var_order = SIAN.get_order_var(theta_l_new[i], non_jet_ring)
-        if Singular.reduce(theta_l_new[i]^get(weights, _var_non_jet, 1), gb) == SIAN.parent_ring_change(SIAN._reduce_poly_mod_p(Rjet(theta_hat[2][findfirst(isequal(theta_l[i]), theta_hat[1])]), p_mod), Rjet_new)
+        if Groebner.normalform(gb, theta_l_new[i]^get(weights, _var_non_jet, 1)) == SIAN.parent_ring_change(SIAN._reduce_poly_mod_p(Rjet(theta_hat[2][findfirst(isequal(theta_l[i]), theta_hat[1])]), p_mod), Rjet_new)
           theta_g = vcat(theta_g, theta_l_new[i])
         end
       end
@@ -263,7 +264,7 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, nthrds=1, i
 
       for i in 1:length(theta_l)
         _var_non_jet, _var_order = SIAN.get_order_var(theta_l_new[i], non_jet_ring)
-        if Singular.reduce(theta_l_new[i]^get(weights, _var_non_jet, 1), gb) == SIAN.parent_ring_change(Rjet(theta_hat[2][findfirst(isequal(theta_l[i]), theta_hat[1])]), Rjet_new)
+        if Groebner.normalform(gb, theta_l_new[i]^get(weights, _var_non_jet, 1)) == SIAN.parent_ring_change(Rjet(theta_hat[2][findfirst(isequal(theta_l[i]), theta_hat[1])]), Rjet_new)
           theta_g = vcat(theta_g, theta_l_new[i])
         end
       end
