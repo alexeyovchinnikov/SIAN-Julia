@@ -9,8 +9,8 @@
         y1(t) = x1(t)
     )
     correct = Dict(
-        "globally" => Set([a, c, d, x1]), 
-        "locally_not_globally" => Set(), 
+        "globally" => Set([a, c, d, x1]),
+        "locally_not_globally" => Set(),
         "nonidentifiable" => Set([b, x2])
     )
     push!(
@@ -26,8 +26,8 @@
         y2(t) = a * x1(t) + a^2
     )
     correct = Dict(
-        "globally" => Set([x1]), 
-        "locally_not_globally" => Set([a]), 
+        "globally" => Set([x1]),
+        "locally_not_globally" => Set([a]),
         "nonidentifiable" => Set()
     )
     push!(
@@ -44,10 +44,10 @@
         N'(t) = 0,
         y1(t) = In(t),
         y2(t) = N(t)
-    )  
+    )
     correct = Dict(
-        "globally" => Set([b, In, N]), 
-        "locally_not_globally" => Set([nu, S, a, E]), 
+        "globally" => Set([b, In, N]),
+        "locally_not_globally" => Set([nu, S, a, E]),
         "nonidentifiable" => Set()
     )
     push!(
@@ -67,7 +67,7 @@
         y2(t) = eA(t) * xA(t) + eB * xB(t) + eC(t) * xC(t),
         y3(t) = eA(t),
         y4(t) = eC(t)
-    )  
+    )
     correct = Dict(
         "globally" => Set([xC, eC, eA]),
         "locally_not_globally" => Set([xA, k1, xB, eB, k2]),
@@ -82,7 +82,7 @@
 
     for case in test_cases
         ode = case[1]
-        result = identifiability_ode(ode, get_parameters(ode); nthrds = 1)
+        result = identifiability_ode(ode, get_parameters(ode))
         @test case[2] == result
     end
 end
