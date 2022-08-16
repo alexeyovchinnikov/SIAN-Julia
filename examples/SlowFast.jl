@@ -13,7 +13,7 @@ ode = @ODEmodel(
   y4(t) = eC(t)
 )
 
-res = identifiability_ode(ode, get_parameters(ode); p = 0.99, p_mod = 0, nthrds = 1)
+res = identifiability_ode(ode, get_parameters(ode); p=0.99, p_mod=0)
 
 
 
@@ -25,6 +25,6 @@ println(res)
 
 r = 2
 
-res = identifiability_ode(SIAN.generate_replica(ode, r), get_parameters(ode; initial_conditions = false); p = 0.99, p_mod = 0, nthrds = 1)
+res = identifiability_ode(SIAN.generate_replica(ode, r), get_parameters(ode; initial_conditions=false); p=0.99, p_mod=0)
 
 println(res)

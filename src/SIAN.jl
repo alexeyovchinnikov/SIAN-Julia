@@ -28,7 +28,7 @@ export OrderedDict, Generic, macroexpand, macrohelper_extract_vars, macrohelper_
 #
 
 """
-    func identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, nthrds=1)
+    func identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, weighted_ordering=false, local_only=false)
 
 Perform identifiability check for a given `ode` system with respect to parameters in `params_to_assess` list.
     
@@ -38,12 +38,13 @@ Perform identifiability check for a given `ode` system with respect to parameter
   - `params_to_assess` - an array of parameters returned by `get_parameters` function.
   - `p` - probability of correctness, default `0.99`.
   - `p_mod` - a prime characteristic, default `0`.
-  - `nthrds` - number of threads for concurrency, default `1`.
   - `infolevel` - an integer, controls the verbosity of Groebner Basis computation, default `0` (no output).
                  See GroebnerBasis.jl documentation for details.
+  - `weighted_ordering` - a boolean, if true, use weighted ordering, default `false`.
+  - `local_only` - a boolean, if true, assess only local identifiability, default `false`.
 """
 
-function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, nthrds=1, infolevel=0, weighted_ordering=false, local_only=false)
+function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0, weighted_ordering=false, local_only=false)
 
   @info "Solving the problem"
 
@@ -245,7 +246,7 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, nthrds=1, i
 
     Et_hat = [SIAN.parent_ring_change(e, Rjet_new) for e in Et_hat]
     gb = groebner(vcat(Et_hat, SIAN.parent_ring_change(z_aux * Q_hat, Rjet_new) - 1))
-    #(Ideal(Rjet_new, ), nthrds=nthrds, infolevel=infolevel)
+
     theta_g = Array{Any}(undef, 0)
     @info "Remainder computation"
 
@@ -284,7 +285,7 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, nthrds=1, i
 end
 
 
-function identifiability_ode(ode::ModelingToolkit.ODESystem, params_to_assess=[]; p=0.99, p_mod=0, nthrds=1, infolevel=0, weighted_ordering=false, local_only=false)
+function identifiability_ode(ode::ModelingToolkit.ODESystem, params_to_assess=[]; p=0.99, p_mod=0, infolevel=0, weighted_ordering=false, local_only=false)
   if any(ModelingToolkit.isoutput(eq.lhs) for eq in ModelingToolkit.equations(ode))
     # @info "Measured quantities are not provided, trying to find the outputs in input ODE."
     measured_quantities = filter(eq -> (ModelingToolkit.isoutput(eq.lhs)), ModelingToolkit.equations(ode))
@@ -301,7 +302,7 @@ function identifiability_ode(ode::ModelingToolkit.ODESystem, params_to_assess=[]
     nemo2mtk = Dict(params_to_assess_ .=> params_to_assess)
   end
 
-  res = identifiability_ode(ode_prep, params_to_assess_; p=p, p_mod=p_mod, nthrds=nthrds, infolevel=infolevel, weighted_ordering=weighted_ordering, local_only=local_only)
+  res = identifiability_ode(ode_prep, params_to_assess_; p=p, p_mod=p_mod, infolevel=infolevel, weighted_ordering=weighted_ordering, local_only=local_only)
 
   @info "Post-Processing: Converting Nemo output to ModelingToolkit types"
   out = Dict()
