@@ -2,12 +2,12 @@ using SIAN, Logging
 @info "Setting up the problem"
 
 ode = @ODEmodel(
-  x1'(t) = -1 * p1 * x1(t) + x2(t) + u0(t),
-  x2'(t) = p3 * x1(t) - p4 * x2(t) + x3(t),
-  x3'(t) = p6 * x1(t) - p7 * x3(t),
-  u0'(t) = 1,
-  y(t) = x1(t),
-  y2(t) = u0(t)
+  x₁'(t) = -1 * p₁ * x₁(t) + x₂(t) + u₀(t),
+  x₂'(t) = p₃ * x₁(t) - p₄ * x₂(t) + x₃(t),
+  x₃'(t) = p₆ * x₁(t) - p₇ * x₃(t),
+  u₀'(t) = 1,
+  y₁(t) = x₁(t),
+  y₂(t) = u₀(t)
 )
 
 res = identifiability_ode(ode, get_parameters(ode); p=0.99, p_mod=0)
