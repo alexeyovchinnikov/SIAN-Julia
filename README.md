@@ -1,5 +1,7 @@
 # SIAN-Julia
-![SIAN Tests for Julia](https://github.com/iliailmer/SIAN-Julia/workflows/SIAN%20Tests%20for%20Julia/badge.svg)
+![Tests](https://github.com/iliailmer/SIAN-Julia/workflows/SIAN%20Tests%20for%20Julia/badge.svg)
+
+<p><a href="https://GitHub.com/alexeyovchinnikov/SIAN-Julia/releases/"><img alt="GitHub release" src="https://img.shields.io/github/release/alexeyovchinnikov/SIAN-Julia.svg"></a> <a href="https://GitHub.com/alexeyovchinnikov/SIAN-Julia/stargazers/"><img alt="GitHub stars" src="https://img.shields.io/github/stars/alexeyovchinnikov/SIAN-Julia.svg?style=social&amp;label=Star&amp;maxAge=2592000"></a> </p>
 
 ## Installing
 
