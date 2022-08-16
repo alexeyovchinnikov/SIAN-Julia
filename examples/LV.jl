@@ -7,6 +7,6 @@ ode = @ODEmodel(
     y1(t) = x1(t)
 )
 
-res = res = identifiability_ode(ode, get_parameters(ode); p = 0.99, p_mod = 0, nthrds = 1)
+res = res = identifiability_ode(ode, get_parameters(ode); p=0.99, p_mod=0)
 
 println(res)
