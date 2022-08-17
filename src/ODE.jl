@@ -47,7 +47,7 @@ function set_parameter_values(ode::ODE{P}, param_values::OrderedDict{P,T}) where
     eval_dict = OrderedDict(str_to_var(v, ode.poly_ring) => str_to_var(v, small_ring) for v in new_vars)
     merge!(eval_dict, OrderedDict(p => small_ring(val) for (p, val) in param_values))
 
-    return ODE{P}(
+    return SIAN.ODE{P}(
         OrderedDict{P,Union{P,Generic.Frac{P}}}(eval_at_dict(v, eval_dict) => eval_at_dict(f, eval_dict) for (v, f) in ode.x_equations),
         OrderedDict{P,Union{P,Generic.Frac{P}}}(eval_at_dict(v, eval_dict) => eval_at_dict(f, eval_dict) for (v, f) in ode.y_equations),
         [eval_at_dict(u, eval_dict) for u in ode.u_vars]
@@ -193,7 +193,7 @@ macro ODEmodel(ex::Expr...)
     @info "Outputs: [$(join(map(string, y_vars), ", "))]"
 
     # creating the ode object
-    ode_expr = :(ODE{SIAN.Nemo.fmpq_mpoly}($x_dict, $y_dict, Array{SIAN.Nemo.fmpq_mpoly}([$(u_vars...)])))
+    ode_expr = :(SIAN.ODE{SIAN.Nemo.fmpq_mpoly}($x_dict, $y_dict, Array{SIAN.Nemo.fmpq_mpoly}([$(u_vars...)])))
 
     result = Expr(
         :block,
