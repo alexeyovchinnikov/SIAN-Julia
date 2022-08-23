@@ -43,9 +43,13 @@ Perform identifiability check for a given `ode` system with respect to parameter
   - `weighted_ordering` - a boolean, if true, use weighted ordering, default `false`.
   - `local_only` - a boolean, if true, assess only local identifiability, default `false`.
 """
+function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0, weighted_ordering=false, local_only=false, known_states=[])
 
-function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0, weighted_ordering=false, local_only=false)
-
+  if infolevel > 0
+    debuglogger = ConsoleLogger(stderr, Logging.Debug)
+    old_logger = global_logger(debuglogger)
+  end
+  @debug "Set logging level to Debug via infolevel=$infolevel"
   @info "Solving the problem"
 
   if p_mod != 0
@@ -89,7 +93,7 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0
   @info "Truncating"
 
   # (a) -----------------------
-  d0 = BigInt(maximum(vcat([total_degree(SIAN.unpack_fraction(Q * eq[2])[1]) for eq in eqs], total_degree(Q))))
+  d0 = BigInt(maximum(vcat([Nemo.total_degree(SIAN.unpack_fraction(Q * eq[2])[1]) for eq in eqs], Nemo.total_degree(Q))))
 
   # (b) -----------------------  
   D1 = floor(BigInt, (length(params_to_assess) + 1) * 2 * d0 * s * (n + 1) * (1 + 2 * d0 * s) / (1 - p))
@@ -168,8 +172,11 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0
   end
 
   theta_l = Array{fmpq_mpoly}(undef, 0)
-  params_to_assess_ = [SIAN.add_to_var(param, Rjet, 0) for param in params_to_assess]
+  params_to_assess_ = [SIAN.add_to_var(param, Rjet, 0) for param in params_to_assess if !(param in known_states)]
+  known_states_jet_form = [SIAN.add_to_var(param, Rjet, 0) for param in known_states]
+  known_values = [evaluate(ic, all_x_theta_vars_subs) for ic in known_states_jet_form]
   Et_eval_base = [evaluate(e, vcat(u_hat[1], y_hat[1]), vcat(u_hat[2], y_hat[2])) for e in Et]
+  Et_eval_base = [evaluate(e, known_states_jet_form, known_values) for e in Et_eval_base] # add initial conditions
   for param_0 in params_to_assess_
     other_params = [v for v in x_theta_vars if v != param_0]
     Et_subs = [evaluate(e, [param_0], [evaluate(param_0, all_x_theta_vars_subs)]) for e in Et_eval_base]
@@ -178,7 +185,6 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0
       theta_l = vcat(theta_l, param_0)
     end
   end
-
   if length(theta_l) == 0
     @info "=== Summary ==="
     @info "Globally identifiable parameters:                 []"
@@ -192,7 +198,7 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0
     non_identifiable_parameters = Set(SIAN.get_order_var(th, non_jet_ring)[1] for th in setdiff(params_to_assess_, theta_l))
 
     if local_only
-      return Dict("non_identifiable" => non_identifiable_parameters, "locally_identifiable" => theta_l)
+      return Dict("non_identifiable" => non_identifiable_parameters, "locally_identifiable" => Set(SIAN.get_order_var(th, non_jet_ring)[1] for th in theta_l))
     end
     weights = Dict()
     if weighted_ordering
@@ -204,18 +210,25 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0
     deg_variety = foldl(*, [BigInt(total_degree(e)) for e in Et])
     D2 = floor(BigInt, 6 * length(theta_l) * deg_variety * (1 + 2 * d0 * maximum(beta)) / (1 - p))
     # (b, c) ---------
+    # remove known parameters from sampling?
+    @debug x_vars, y_vars, all_params
+
     sample = SIAN.sample_point(D2, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq, Q)
     y_hat = sample[1]
     u_hat = sample[2]
     theta_hat = sample[3]
 
     # (d) ------------
+    Et_hat = [evaluate(e, known_states_jet_form, known_values) for e in Et]
     Et_hat = [evaluate(e, vcat(y_hat[1], u_hat[1]), vcat(y_hat[2], u_hat[2])) for e in Et]
+
     Et_x_vars = Set{fmpq_mpoly}()
     for poly in Et_hat
       Et_x_vars = union(Et_x_vars, Set(vars(poly)))
     end
-    Q_hat = evaluate(Q, u_hat[1], u_hat[2])
+    Q_hat = evaluate(Q, known_states_jet_form, known_values)
+    Q_hat = evaluate(Q_hat, u_hat[1], u_hat[2])
+
     vrs_sorted = vcat(sort([e for e in Et_x_vars], lt=(x, y) -> SIAN.compare_diff_var(x, y, all_indets, n + m + u, s)), z_aux, sort(not_int_cond_params, rev=true))
 
     # assign weights to variables
@@ -247,6 +260,7 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0
     Et_hat = [SIAN.parent_ring_change(e, Rjet_new) for e in Et_hat]
     gb = groebner(vcat(Et_hat, SIAN.parent_ring_change(z_aux * Q_hat, Rjet_new) - 1))
 
+    @debug gb
     theta_g = Array{Any}(undef, 0)
     @info "Remainder computation"
 
@@ -282,6 +296,11 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0
     @info "==============="
     return result
   end
+end
+
+
+function identifiability_ode(ode; p=0.99, p_mod=0, infolevel=0, weighted_ordering=false, local_only=false, known_states=[])
+  return identifiability_ode(ode, SIAN.get_parameters(ode); p=p, p_mod=p_mod, infolevel=infolevel, weighted_ordering=weighted_ordering, local_only=local_only, known_states=known_states)
 end
 
 
