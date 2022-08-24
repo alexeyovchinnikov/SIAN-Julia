@@ -1,10 +1,25 @@
+function replace_random_with_known(params, vals, known_states_jet_form, known_values)
+    for idx in 1:length(params)
+        if params[idx] in known_states_jet_form
+            found_index = 1
+            for i in 1:length(known_states_jet_form)
+                if known_states_jet_form[i] == params[idx]
+                    found_index = i
+                    break
+                end
+            end
+            vals[idx] = fmpq(known_values[found_index])
+        end
+    end
+    return vals
+end
 # ------------------------------------------------------------------------------
 """
     func sample_point(bound, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq, Q)
 
 Sample random values for parameters of the polynomial system.
 """
-function sample_point(bound, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq, Q, known_values=[], known_states_jet_form=[])
+function sample_point(bound, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq, Q; known_values=[], known_states_jet_form=[])
     local u_hat, theta_hat, all_subs
 
     s = length(all_params)
@@ -12,16 +27,11 @@ function sample_point(bound, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq
     y_hat_vals = Array{fmpq}(undef, 0)
 
     while true
-        theta_hat = [fmpq(rnd) for rnd in rand(0:bound, s)]
-        u_hat = [fmpq(rnd) for rnd in rand(0:bound, length(u_variables))]
+        theta_hat = replace_random_with_known(all_params, [fmpq(rnd) for rnd in rand(0:bound, s)], known_states_jet_form, known_values)
+        u_hat = replace_random_with_known(u_variables, [fmpq(rnd) for rnd in rand(0:bound, length(u_variables))], known_states_jet_form, known_values)
         all_subs = [vcat(all_params, u_variables), vcat(theta_hat, u_hat)]
-        for idx in 1:length(all_subs)
-            if all_subs[idx][1] in known_states_jet_form
-                all_subs[idx][2] = known_values[indexin(all_subs[idx][2], known_states_jet_form)]
-            end
-        end
         if evaluate(Q, all_subs[1], all_subs[2]) == 0
-            next
+            continue
         end
         vls = insert_zeros_to_vals(all_subs[1], all_subs[2])
         for i in 0:(s+1)
