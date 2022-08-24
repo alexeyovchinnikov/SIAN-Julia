@@ -385,3 +385,15 @@ end
 
 # ------------------------------------------------------------------------------
 
+function eval_known_ic(poly::Nemo.fmpq_mpoly, konwn_states_jet_form::Vector{Nemo.fmpq_mpoly}, known_values::Vector{Nemo.fmpq})
+    return Nemo.evaluate(poly, konwn_states_jet_form, known_values)
+end
+
+function eval_known_ic(poly::Nemo.Generic.Frac{Nemo.fmpq_mpoly}, konwn_states_jet_form::Vector{Nemo.fmpq_mpoly}, known_values::Vector{Nemo.fmpq})
+    numer, denom = SIAN.unpack_fraction(poly)
+    return Nemo.evaluate(numer, konwn_states_jet_form, known_values) // Nemo.evaluate(denom, konwn_states_jet_form, known_values)
+end
+
+function eval_known_ic(poly::Vector{Nemo.RingElem}, konwn_states_jet_form::Vector{Nemo.fmpq_mpoly}, known_values::Vector{Nemo.fmpq})
+    return [poly[1], SIAN.eval_known_ic(poly[2], konwn_states_jet_form, known_values)]
+end

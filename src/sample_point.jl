@@ -4,7 +4,7 @@
 
 Sample random values for parameters of the polynomial system.
 """
-function sample_point(bound, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq, Q)
+function sample_point(bound, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq, Q, known_values=[], known_states_jet_form=[])
     local u_hat, theta_hat, all_subs
 
     s = length(all_params)
@@ -15,6 +15,11 @@ function sample_point(bound, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq
         theta_hat = [fmpq(rnd) for rnd in rand(0:bound, s)]
         u_hat = [fmpq(rnd) for rnd in rand(0:bound, length(u_variables))]
         all_subs = [vcat(all_params, u_variables), vcat(theta_hat, u_hat)]
+        for idx in 1:length(all_subs)
+            if all_subs[idx][1] in known_states_jet_form
+                all_subs[idx][2] = known_values[indexin(all_subs[idx][2], known_states_jet_form)]
+            end
+        end
         if evaluate(Q, all_subs[1], all_subs[2]) == 0
             next
         end
