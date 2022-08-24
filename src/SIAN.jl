@@ -210,26 +210,23 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0
     deg_variety = foldl(*, [BigInt(total_degree(e)) for e in Et])
     D2 = floor(BigInt, 6 * length(theta_l) * deg_variety * (1 + 2 * d0 * maximum(beta)) / (1 - p))
     # (b, c) ---------
-    # remove known parameters from sampling?
-    # x_vars = [v for v in x_vars if !(v in known_states)]
-    # all_params = [v for v in all_params if !(v in known_states_jet_form)]
-    # not_int_cond_params = [v for v in not_int_cond_params if !(v in known_states_jet_form)]
 
-    # X_eq = [SIAN.eval_known_ic(e, known_states_jet_form, known_values) for e in X_eq]
-    # Y_eq = [SIAN.eval_known_ic(e, known_states_jet_form, known_values) for e in Y_eq]
-
-    sample = SIAN.sample_point(D2, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq, Q)
+    sample = SIAN.sample_point(D2, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq, Q; known_values=known_values, known_states_jet_form=known_states_jet_form)
     y_hat = sample[1]
     u_hat = sample[2]
     theta_hat = sample[3]
 
     # (d) ------------
     Et_hat = [evaluate(e, vcat(y_hat[1], u_hat[1]), vcat(y_hat[2], u_hat[2])) for e in Et]
+    for each in zip(known_states_jet_form, known_values)
+      push!(Et_hat, each[1] - each[2])
+    end
 
     Et_x_vars = Set{fmpq_mpoly}()
     for poly in Et_hat
       Et_x_vars = union(Et_x_vars, Set(vars(poly)))
     end
+    Et_x_vars = setdiff(Et_x_vars, not_int_cond_params)
     Q_hat = evaluate(Q, u_hat[1], u_hat[2])
     vrs_sorted = vcat(sort([e for e in Et_x_vars], lt=(x, y) -> SIAN.compare_diff_var(x, y, all_indets, n + m + u, s)), z_aux, sort(not_int_cond_params, rev=true))
 
@@ -263,7 +260,6 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0
     # return Rjet_new, vcat(Et_hat, SIAN.parent_ring_change(z_aux * Q_hat, Rjet_new) - 1), vrs_sorted, not_int_cond_params
     gb = groebner(vcat(Et_hat, SIAN.parent_ring_change(z_aux * Q_hat, Rjet_new) - 1))
 
-    @debug gb
     theta_g = Array{Any}(undef, 0)
     @info "Remainder computation"
 
