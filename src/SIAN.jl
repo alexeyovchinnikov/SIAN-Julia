@@ -235,12 +235,12 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0
       for i in 1:length(Et_hat)
         for _var in Set(vars(Et_hat[i]))
           _var_non_jet, _var_order = SIAN.get_order_var(_var, non_jet_ring)
-          Et_hat[i] = StructuralIdentifiability.make_substitution(Et_hat[i], _var, _var^get(weights, _var_non_jet, 1), parent(_var)(1))
+          Et_hat[i] = make_substitution(Et_hat[i], _var, _var^get(weights, _var_non_jet, 1), parent(_var)(1))
         end
       end
       for _var in Set(vars(Q_hat))
         _var_non_jet, _var_order = SIAN.get_order_var(_var, non_jet_ring)
-        Q_hat = StructuralIdentifiability.make_substitution(Q_hat, _var, _var^get(weights, _var_non_jet, 1), parent(_var)(1))
+        Q_hat = make_substitution(Q_hat, _var, _var^get(weights, _var_non_jet, 1), parent(_var)(1))
       end
     end
     # 4. Determine.
