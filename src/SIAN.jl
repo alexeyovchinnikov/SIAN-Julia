@@ -203,9 +203,6 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0
     weights = Dict()
     if weighted_ordering
       weights = SIAN.get_weights(ode, non_identifiable_parameters)
-      for k in known_states_jet_form
-        weights[k] = 1
-      end
     end
     # 3. Randomize.
     @info "Randomizing"
@@ -237,11 +234,17 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0
     if weighted_ordering
       for i in 1:length(Et_hat)
         for _var in Set(vars(Et_hat[i]))
+          if _var in known_states_jet_form
+            continue
+          end
           _var_non_jet, _var_order = SIAN.get_order_var(_var, non_jet_ring)
           Et_hat[i] = make_substitution(Et_hat[i], _var, _var^get(weights, _var_non_jet, 1), parent(_var)(1))
         end
       end
       for _var in Set(vars(Q_hat))
+        if _var in known_states_jet_form
+          continue
+        end
         _var_non_jet, _var_order = SIAN.get_order_var(_var, non_jet_ring)
         Q_hat = make_substitution(Q_hat, _var, _var^get(weights, _var_non_jet, 1), parent(_var)(1))
       end
