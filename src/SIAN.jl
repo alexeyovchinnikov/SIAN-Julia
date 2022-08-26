@@ -204,7 +204,7 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0
     if weighted_ordering
       weights = SIAN.get_weights(ode, non_identifiable_parameters)
       for k in keys(weights)
-        if k in known_states
+        if SIAN.add_to_var(k, Rjet, 0) in known_states_jet_form
           weights[k] = 1
         end
       end
