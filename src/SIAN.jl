@@ -203,6 +203,7 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0
     weights = Dict()
     if weighted_ordering
       weights = SIAN.get_weights(ode, non_identifiable_parameters)
+      @debug "Weights: $weights"
     end
     # 3. Randomize.
     @info "Randomizing"
