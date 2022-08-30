@@ -19,7 +19,7 @@ include("get_weights.jl")
 export identifiability_ode, PreprocessODE
 export @ODEmodel
 export ODE
-export OrderedDict, Generic, macroexpand, macrohelper_extract_vars, macrohelper_clean, fmpq_mpoly, get_parameters
+export get_parameters
 
 
 # ------------------------------------------------------------------------------
