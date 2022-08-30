@@ -157,14 +157,24 @@
         result = identifiability_ode(ode; measured_quantities=case[end], weighted_ordering=true, known_states=[])
         result_no_weights = identifiability_ode(ode; measured_quantities=case[end], weighted_ordering=false, known_states=[])
 
-        @test case[2] == result
-        @test case[2] == result_no_weights
+        @test isequal(Set(case[2]["nonidentifiable"]), Set(result["nonidentifiable"]))
+        @test isequal(Set(case[2]["locally_not_globally"]), Set(result["locally_not_globally"]))
+        @test isequal(Set(case[2]["globally"]), Set(result["globally"]))
+
+        @test isequal(Set(case[2]["nonidentifiable"]), Set(result_no_weights["nonidentifiable"]))
+        @test isequal(Set(case[2]["locally_not_globally"]), Set(result_no_weights["locally_not_globally"]))
+        @test isequal(Set(case[2]["globally"]), Set(result_no_weights["globally"]))
 
         result = identifiability_ode(ode; measured_quantities=case[end], weighted_ordering=true, known_states=case[4])
         result_no_weights = identifiability_ode(ode; measured_quantities=case[end], weighted_ordering=false, known_states=case[4])
 
-        @test case[3] == result
-        @test case[3] == result_no_weights
+        @test isequal(Set(case[3]["nonidentifiable"]), Set(result["nonidentifiable"]))
+        @test isequal(Set(case[3]["locally_not_globally"]), Set(result["locally_not_globally"]))
+        @test isequal(Set(case[3]["globally"]), Set(result["globally"]))
+
+        @test isequal(Set(case[3]["nonidentifiable"]), Set(result_no_weights["nonidentifiable"]))
+        @test isequal(Set(case[3]["locally_not_globally"]), Set(result_no_weights["locally_not_globally"]))
+        @test isequal(Set(case[3]["globally"]), Set(result_no_weights["globally"]))
 
     end
 end
