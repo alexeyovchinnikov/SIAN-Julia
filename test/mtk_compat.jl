@@ -39,7 +39,7 @@
     # ---------------------------------------
     @parameters a, b, c, d
     @variables t x1(t) x2(t) y1(t)
-
+    D = Differential(t)
     eqs = [
         D(x1) ~ a * x1 - b * x1 * x2,
         D(x2) ~ -c * x2 + d * x1 * x2,
@@ -154,7 +154,7 @@
 
     for case in test_cases
         ode = case[1]
-        result = identifiability_ode(ode; measured_quantities=measured_quantities, weighted_ordering=true, known_states=[])
+        result = identifiability_ode(ode; measured_quantities=case[end], weighted_ordering=true, known_states=[])
         result_no_weights = identifiability_ode(ode; measured_quantities=case[end], weighted_ordering=false, known_states=[])
 
         @test case[2] == result
