@@ -312,7 +312,7 @@ function add_zero_to_vars(poly::MPolyElem, new_ring::MPolyRing)
         )
     end
     builder = MPolyBuildCtx(new_ring)
-    for term in zip(exponent_vectors(poly), coeffs(poly))
+    for term in zip(exponent_vectors(poly), coefficients(poly))
         exp, coef = term
         new_exp = [0 for _ in gens(new_ring)]
         for i in 1:length(exp)
@@ -366,7 +366,7 @@ function add_to_vars_in_replica(poly::MPolyElem, mu, new_ring::MPolyRing, r)
         end
     end
     builder = MPolyBuildCtx(new_ring)
-    for term in zip(exponent_vectors(poly), coeffs(poly))
+    for term in zip(exponent_vectors(poly), coefficients(poly))
         exp, coef = term
         new_exp = [0 for _ in gens(new_ring)]
         for i in 1:length(exp)

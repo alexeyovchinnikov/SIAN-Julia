@@ -69,7 +69,7 @@
     @parameters a
     @variables t x1(t) y1(t) y2(t)
     eqs = [
-        D(x1) ~ a * x1,
+        D(x1) ~ 0,
     ]
     measured_quantities = [y1 ~ x1, y2 ~ a * x1 + a^2]
     known_states = [a]
