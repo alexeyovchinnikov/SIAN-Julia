@@ -67,7 +67,7 @@
     #---------------------------------------
 
     @parameters a
-    @variables t x1(t) y1(t)
+    @variables t x1(t) y1(t) y2(t)
     eqs = [
         D(x1) ~ a * x1,
     ]
