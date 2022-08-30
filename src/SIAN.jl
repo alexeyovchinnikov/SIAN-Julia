@@ -311,12 +311,14 @@ function identifiability_ode(ode; p=0.99, p_mod=0, infolevel=0, weighted_orderin
 end
 
 
-function identifiability_ode(ode::ModelingToolkit.ODESystem, params_to_assess=[]; p=0.99, p_mod=0, infolevel=0, weighted_ordering=false, local_only=false)
-  if any(ModelingToolkit.isoutput(eq.lhs) for eq in ModelingToolkit.equations(ode))
-    # @info "Measured quantities are not provided, trying to find the outputs in input ODE."
-    measured_quantities = filter(eq -> (ModelingToolkit.isoutput(eq.lhs)), ModelingToolkit.equations(ode))
-  else
-    throw(error("Measured quantities (output functions) were not provided and no outputs were found."))
+function identifiability_ode(ode::ModelingToolkit.ODESystem, params_to_assess=[]; measured_quantities=Array{ModelingToolkit.Equation}[], p=0.99, p_mod=0, infolevel=0, weighted_ordering=false, known_states=[], local_only=false)
+  if length(measured_quantities) == 0
+    if any(ModelingToolkit.isoutput(eq.lhs) for eq in ModelingToolkit.equations(ode))
+      @info "Measured quantities are not provided, trying to find the outputs in input ODE."
+      measured_quantities = filter(eq -> (ModelingToolkit.isoutput(eq.lhs)), ModelingToolkit.equations(ode))
+    else
+      throw(error("Measured quantities (output functions) were not provided and no outputs were found."))
+    end
   end
   ode_prep, input_syms, gens_ = PreprocessODE(ode, measured_quantities)
   t = ModelingToolkit.arguments(ModelingToolkit.states(ode)[1])[1]
@@ -324,11 +326,16 @@ function identifiability_ode(ode::ModelingToolkit.ODESystem, params_to_assess=[]
     params_to_assess_ = SIAN.get_parameters(ode_prep)
     nemo2mtk = Dict(gens_ .=> input_syms)
   else
-    params_to_assess_ = [eval_at_nemo(each, Dict(syms .=> gens_)) for each in params_to_assess]
+    params_to_assess_ = [eval_at_nemo(each, Dict(input_syms .=> gens_)) for each in params_to_assess]
     nemo2mtk = Dict(params_to_assess_ .=> params_to_assess)
   end
+  if length(known_states) != 0
+    known_states_ = [eval_at_nemo(each, Dict(input_syms .=> gens_)) for each in known_states]
+  else
+    known_states_ = []
+  end
 
-  res = identifiability_ode(ode_prep, params_to_assess_; p=p, p_mod=p_mod, infolevel=infolevel, weighted_ordering=weighted_ordering, local_only=local_only)
+  res = identifiability_ode(ode_prep, params_to_assess_; p=p, p_mod=p_mod, infolevel=infolevel, weighted_ordering=weighted_ordering, known_states=known_states_, local_only=local_only)
 
   @info "Post-Processing: Converting Nemo output to ModelingToolkit types"
   out = Dict()
