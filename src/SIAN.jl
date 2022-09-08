@@ -263,9 +263,6 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0
 
 
     Et_hat = [SIAN.parent_ring_change(e, Rjet_new) for e in Et_hat]
-    @debug "Weights: $weights"
-    @debug "Et_hat: $Et_hat"
-    # return Rjet_new, vcat(Et_hat, SIAN.parent_ring_change(z_aux * Q_hat, Rjet_new) - 1), vrs_sorted, not_int_cond_params
     gb = groebner(vcat(Et_hat, SIAN.parent_ring_change(z_aux * Q_hat, Rjet_new) - 1))
 
     theta_g = Array{Any}(undef, 0)
