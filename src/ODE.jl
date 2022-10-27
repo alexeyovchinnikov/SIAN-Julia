@@ -62,7 +62,7 @@ end
 Prints the ODE in the format accepted by SIAN (https://github.com/pogudingleb/SIAN)
 """
 function print_for_SIAN(ode::ODE{P}, outputs::Array{P,1}) where {P<:MPolyElem{<:FieldElem}}
-    vars_str = OrderedDict(x => var_to_str(x) * "(t)" for x in vcat(ode.x_vars, ode.u_vars))
+    vars_str = OrderedDict(x => var_to_str(x) * "(t)" for x in vcat(ode.x_vars, ode.u_vars, ode.y_vars))
     merge!(vars_str, OrderedDict(p => var_to_str(p) for p in ode.parameters))
     R_print, vars_print = Nemo.PolynomialRing(base_ring(ode.poly_ring), [vars_str[v] for v in gens(ode.poly_ring)])
     result = ""
