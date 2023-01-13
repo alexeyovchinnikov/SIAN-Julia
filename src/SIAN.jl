@@ -303,6 +303,7 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0
 end
 
 
+<<<<<<< HEAD
 function identifiability_ode(ode; p=0.99, p_mod=0, infolevel=0, weighted_ordering=false, local_only=false, known_states=[])
   return identifiability_ode(ode, SIAN.get_parameters(ode); p=p, p_mod=p_mod, infolevel=infolevel, weighted_ordering=weighted_ordering, local_only=local_only, known_states=known_states)
 end
@@ -316,6 +317,23 @@ function identifiability_ode(ode::ModelingToolkit.ODESystem, params_to_assess=[]
     else
       throw(error("Measured quantities (output functions) were not provided and no outputs were found."))
     end
+||||||| 3929f93
+function identifiability_ode(ode::ModelingToolkit.ODESystem, params_to_assess=[]; p=0.99, p_mod=0, infolevel=0, weighted_ordering=false, local_only=false)
+  if any(ModelingToolkit.isoutput(eq.lhs) for eq in ModelingToolkit.equations(ode))
+    # @info "Measured quantities are not provided, trying to find the outputs in input ODE."
+    measured_quantities = filter(eq -> (ModelingToolkit.isoutput(eq.lhs)), ModelingToolkit.equations(ode))
+  else
+    throw(error("Measured quantities (output functions) were not provided and no outputs were found."))
+=======
+function identifiability_ode(ode::ModelingToolkit.ODESystem, params_to_assess=[]; measured_quantities=Array{ModelingToolkit.Equation}[], p=0.99, p_mod=0, infolevel=0, weighted_ordering=false, local_only=false)
+  if length(measured_quantities) == 0
+    if any(ModelingToolkit.isoutput(eq.lhs) for eq in ModelingToolkit.equations(ode))
+      @info "Measured quantities are not provided, trying to find the outputs in input ODE."
+      measured_quantities = filter(eq -> (ModelingToolkit.isoutput(eq.lhs)), ModelingToolkit.equations(ode))
+    else
+      throw(error("Measured quantities (output functions) were not provided and no outputs were found."))
+    end
+>>>>>>> main
   end
   ode_prep, input_syms, gens_ = PreprocessODE(ode, measured_quantities)
   t = ModelingToolkit.arguments(ModelingToolkit.states(ode)[1])[1]
