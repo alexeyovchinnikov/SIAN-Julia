@@ -303,7 +303,7 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0
 end
 
 
-function identifiability_ode(ode::ModelingToolkit.ODESystem, params_to_assess=[]; measured_quantities=Array{ModelingToolkit.Equation}[], p=0.99, p_mod=0, infolevel=0, weighted_ordering=false, local_only=false)
+function identifiability_ode(ode::ModelingToolkit.ODESystem, params_to_assess=[]; known_states=[], measured_quantities=Array{ModelingToolkit.Equation}[], p=0.99, p_mod=0, infolevel=0, weighted_ordering=false, local_only=false)
   if length(measured_quantities) == 0
     if any(ModelingToolkit.isoutput(eq.lhs) for eq in ModelingToolkit.equations(ode))
       @info "Measured quantities are not provided, trying to find the outputs in input ODE."
