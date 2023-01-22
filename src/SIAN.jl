@@ -19,7 +19,7 @@ include("get_weights.jl")
 export identifiability_ode, PreprocessODE
 export @ODEmodel
 export ODE
-export OrderedDict, Generic, macroexpand, macrohelper_extract_vars, macrohelper_clean, fmpq_mpoly, get_parameters
+export get_parameters
 
 
 # ------------------------------------------------------------------------------
@@ -31,7 +31,7 @@ export OrderedDict, Generic, macroexpand, macrohelper_extract_vars, macrohelper_
     func identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, weighted_ordering=false, local_only=false)
 
 Perform identifiability check for a given `ode` system with respect to parameters in `params_to_assess` list.
-    
+
 ## Input
 
   - `ode` - an ODE system returned by the `@ODEmodel` macro.
@@ -43,9 +43,13 @@ Perform identifiability check for a given `ode` system with respect to parameter
   - `weighted_ordering` - a boolean, if true, use weighted ordering, default `false`.
   - `local_only` - a boolean, if true, assess only local identifiability, default `false`.
 """
+function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0, weighted_ordering=false, local_only=false, known_states=[])
 
-function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0, weighted_ordering=false, local_only=false)
-
+  if infolevel > 0
+    debuglogger = ConsoleLogger(stderr, Logging.Debug)
+    old_logger = global_logger(debuglogger)
+  end
+  @debug "Set logging level to Debug via infolevel=$infolevel"
   @info "Solving the problem"
 
   if p_mod != 0
@@ -89,9 +93,9 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0
   @info "Truncating"
 
   # (a) -----------------------
-  d0 = BigInt(maximum(vcat([total_degree(SIAN.unpack_fraction(Q * eq[2])[1]) for eq in eqs], total_degree(Q))))
+  d0 = BigInt(maximum(vcat([Nemo.total_degree(SIAN.unpack_fraction(Q * eq[2])[1]) for eq in eqs], Nemo.total_degree(Q))))
 
-  # (b) -----------------------  
+  # (b) -----------------------
   D1 = floor(BigInt, (length(params_to_assess) + 1) * 2 * d0 * s * (n + 1) * (1 + 2 * d0 * s) / (1 - p))
 
   # (c, d) ---------------
@@ -168,8 +172,11 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0
   end
 
   theta_l = Array{fmpq_mpoly}(undef, 0)
-  params_to_assess_ = [SIAN.add_to_var(param, Rjet, 0) for param in params_to_assess]
+  params_to_assess_ = [SIAN.add_to_var(param, Rjet, 0) for param in params_to_assess if !(param in known_states)]
+  known_states_jet_form = [SIAN.add_to_var(param, Rjet, 0) for param in known_states]
+  known_values = [evaluate(ic, all_x_theta_vars_subs) for ic in known_states_jet_form]
   Et_eval_base = [evaluate(e, vcat(u_hat[1], y_hat[1]), vcat(u_hat[2], y_hat[2])) for e in Et]
+  Et_eval_base = [SIAN.eval_known_ic(e, known_states_jet_form, known_values) for e in Et_eval_base] # add initial conditions
   for param_0 in params_to_assess_
     other_params = [v for v in x_theta_vars if v != param_0]
     Et_subs = [evaluate(e, [param_0], [evaluate(param_0, all_x_theta_vars_subs)]) for e in Et_eval_base]
@@ -178,7 +185,6 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0
       theta_l = vcat(theta_l, param_0)
     end
   end
-
   if length(theta_l) == 0
     @info "=== Summary ==="
     @info "Globally identifiable parameters:                 []"
@@ -192,7 +198,7 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0
     non_identifiable_parameters = Set(SIAN.get_order_var(th, non_jet_ring)[1] for th in setdiff(params_to_assess_, theta_l))
 
     if local_only
-      return Dict("non_identifiable" => non_identifiable_parameters, "locally_identifiable" => theta_l)
+      return Dict("non_identifiable" => non_identifiable_parameters, "locally_identifiable" => Set(SIAN.get_order_var(th, non_jet_ring)[1] for th in theta_l))
     end
     weights = Dict()
     if weighted_ordering
@@ -204,17 +210,23 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0
     deg_variety = foldl(*, [BigInt(total_degree(e)) for e in Et])
     D2 = floor(BigInt, 6 * length(theta_l) * deg_variety * (1 + 2 * d0 * maximum(beta)) / (1 - p))
     # (b, c) ---------
-    sample = SIAN.sample_point(D2, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq, Q)
+
+    sample = SIAN.sample_point(D2, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq, Q; known_values=known_values, known_states_jet_form=known_states_jet_form)
     y_hat = sample[1]
     u_hat = sample[2]
     theta_hat = sample[3]
 
     # (d) ------------
     Et_hat = [evaluate(e, vcat(y_hat[1], u_hat[1]), vcat(y_hat[2], u_hat[2])) for e in Et]
+    for each in zip(known_states_jet_form, known_values)
+      push!(Et_hat, each[1] - each[2])
+    end
+
     Et_x_vars = Set{fmpq_mpoly}()
     for poly in Et_hat
       Et_x_vars = union(Et_x_vars, Set(vars(poly)))
     end
+    Et_x_vars = setdiff(Et_x_vars, not_int_cond_params)
     Q_hat = evaluate(Q, u_hat[1], u_hat[2])
     vrs_sorted = vcat(sort([e for e in Et_x_vars], lt=(x, y) -> SIAN.compare_diff_var(x, y, all_indets, n + m + u, s)), z_aux, sort(not_int_cond_params, rev=true))
 
@@ -223,10 +235,16 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0
       for i in 1:length(Et_hat)
         for _var in Set(vars(Et_hat[i]))
           _var_non_jet, _var_order = SIAN.get_order_var(_var, non_jet_ring)
+          # if _var in known_states_jet_form || string(_var_non_jet) in string.(known_states)
+          # continue
+          # end
           Et_hat[i] = make_substitution(Et_hat[i], _var, _var^get(weights, _var_non_jet, 1), parent(_var)(1))
         end
       end
       for _var in Set(vars(Q_hat))
+        if _var in known_states_jet_form
+          continue
+        end
         _var_non_jet, _var_order = SIAN.get_order_var(_var, non_jet_ring)
         Q_hat = make_substitution(Q_hat, _var, _var^get(weights, _var_non_jet, 1), parent(_var)(1))
       end
@@ -285,7 +303,7 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0
 end
 
 
-function identifiability_ode(ode::ModelingToolkit.ODESystem, params_to_assess=[]; measured_quantities=Array{ModelingToolkit.Equation}[], p=0.99, p_mod=0, infolevel=0, weighted_ordering=false, local_only=false)
+function identifiability_ode(ode::ModelingToolkit.ODESystem, params_to_assess=[]; known_states=[], measured_quantities=Array{ModelingToolkit.Equation}[], p=0.99, p_mod=0, infolevel=0, weighted_ordering=false, local_only=false)
   if length(measured_quantities) == 0
     if any(ModelingToolkit.isoutput(eq.lhs) for eq in ModelingToolkit.equations(ode))
       @info "Measured quantities are not provided, trying to find the outputs in input ODE."
@@ -303,8 +321,13 @@ function identifiability_ode(ode::ModelingToolkit.ODESystem, params_to_assess=[]
     params_to_assess_ = [eval_at_nemo(each, Dict(input_syms .=> gens_)) for each in params_to_assess]
     nemo2mtk = Dict(params_to_assess_ .=> params_to_assess)
   end
+  if length(known_states) != 0
+    known_states_ = [eval_at_nemo(each, Dict(input_syms .=> gens_)) for each in known_states]
+  else
+    known_states_ = []
+  end
 
-  res = identifiability_ode(ode_prep, params_to_assess_; p=p, p_mod=p_mod, infolevel=infolevel, weighted_ordering=weighted_ordering, local_only=local_only)
+  res = identifiability_ode(ode_prep, params_to_assess_; p=p, p_mod=p_mod, infolevel=infolevel, weighted_ordering=weighted_ordering, known_states=known_states_, local_only=local_only)
 
   @info "Post-Processing: Converting Nemo output to ModelingToolkit types"
   out = Dict()

@@ -47,7 +47,7 @@ function set_parameter_values(ode::ODE{P}, param_values::OrderedDict{P,T}) where
     eval_dict = OrderedDict(str_to_var(v, ode.poly_ring) => str_to_var(v, small_ring) for v in new_vars)
     merge!(eval_dict, OrderedDict(p => small_ring(val) for (p, val) in param_values))
 
-    return ODE{P}(
+    return SIAN.ODE{P}(
         OrderedDict{P,Union{P,Generic.Frac{P}}}(eval_at_dict(v, eval_dict) => eval_at_dict(f, eval_dict) for (v, f) in ode.x_equations),
         OrderedDict{P,Union{P,Generic.Frac{P}}}(eval_at_dict(v, eval_dict) => eval_at_dict(f, eval_dict) for (v, f) in ode.y_equations),
         [eval_at_dict(u, eval_dict) for u in ode.u_vars]
@@ -62,7 +62,7 @@ end
 Prints the ODE in the format accepted by SIAN (https://github.com/pogudingleb/SIAN)
 """
 function print_for_SIAN(ode::ODE{P}, outputs::Array{P,1}) where {P<:MPolyElem{<:FieldElem}}
-    vars_str = OrderedDict(x => var_to_str(x) * "(t)" for x in vcat(ode.x_vars, ode.u_vars))
+    vars_str = OrderedDict(x => var_to_str(x) * "(t)" for x in vcat(ode.x_vars, ode.u_vars, ode.y_vars))
     merge!(vars_str, OrderedDict(p => var_to_str(p) for p in ode.parameters))
     R_print, vars_print = Nemo.PolynomialRing(base_ring(ode.poly_ring), [vars_str[v] for v in gens(ode.poly_ring)])
     result = ""
@@ -193,7 +193,7 @@ macro ODEmodel(ex::Expr...)
     @info "Outputs: [$(join(map(string, y_vars), ", "))]"
 
     # creating the ode object
-    ode_expr = :(ODE{SIAN.Nemo.fmpq_mpoly}($x_dict, $y_dict, Array{SIAN.Nemo.fmpq_mpoly}([$(u_vars...)])))
+    ode_expr = :(SIAN.ODE{SIAN.Nemo.fmpq_mpoly}($x_dict, $y_dict, Array{SIAN.Nemo.fmpq_mpoly}([$(u_vars...)])))
 
     result = Expr(
         :block,
@@ -202,6 +202,22 @@ macro ODEmodel(ex::Expr...)
         ode_expr
     )
     return esc(result)
+end
+
+function Base.show(io::IO, ode::SIAN.ODE)
+    varstr = Dict(x => var_to_str(x) * "(t)" for x in vcat(ode.x_vars, ode.u_vars, ode.y_vars))
+    merge!(varstr, Dict(p => var_to_str(p) for p in ode.parameters))
+    R_print, vars_print = SIAN.Nemo.PolynomialRing(base_ring(ode.poly_ring), [varstr[v] for v in gens(ode.poly_ring)])
+    for (x, eq) in ode.x_equations
+        print(io, var_to_str(x) * "'(t) = ")
+        print(io, SIAN.Nemo.evaluate(eq, vars_print))
+        print(io, "\n")
+    end
+    for (y, eq) in ode.y_equations
+        print(io, SIAN.var_to_str(y) * "(t) = ")
+        print(io, SIAN.Nemo.evaluate(eq, vars_print))
+        print(io, "\n")
+    end
 end
 
 # ------------------------------------------------------------------------------

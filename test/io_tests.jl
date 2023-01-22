@@ -13,9 +13,15 @@
         "locally_not_globally" => Set(),
         "nonidentifiable" => Set([b, x2])
     )
+    correct_with_known = Dict(
+        "globally" => Set([x1, c, x2, d, a]),
+        "locally_not_globally" => Set(),
+        "nonidentifiable" => Set()
+    )
+    known_states = [b]
     push!(
         test_cases,
-        (ode, correct)
+        (ode, correct, correct_with_known, known_states)
     )
 
     #---------------------------------------
@@ -30,9 +36,15 @@
         "locally_not_globally" => Set([a]),
         "nonidentifiable" => Set()
     )
+    correct_with_known = Dict(
+        "globally" => Set([x1]),
+        "locally_not_globally" => Set(),
+        "nonidentifiable" => Set()
+    )
+    known_states = [a]
     push!(
         test_cases,
-        (ode, correct)
+        (ode, correct, correct_with_known, known_states)
     )
 
     #---------------------------------------
@@ -50,9 +62,15 @@
         "locally_not_globally" => Set([nu, S, a, E]),
         "nonidentifiable" => Set()
     )
+    correct_with_known = Dict(
+        "globally" => Set([E, In, nu, b, N]),
+        "locally_not_globally" => Set(),
+        "nonidentifiable" => Set()
+    )
+    known_states = [a, S]
     push!(
         test_cases,
-        (ode, correct)
+        (ode, correct, correct_with_known, known_states)
     )
 
     #---------------------------------------
@@ -73,16 +91,32 @@
         "locally_not_globally" => Set([xA, k1, xB, eB, k2]),
         "nonidentifiable" => Set()
     )
+    correct_with_known = Dict(
+        "globally" => Set([eA, xC, k2, xB, xA, eC]),
+        "locally_not_globally" => Set(),
+        "nonidentifiable" => Set()
+    )
+    known_states = [k1, eB]
     push!(
         test_cases,
-        (ode, correct)
+        (ode, correct, correct_with_known, known_states)
     )
 
     #---------------------------------------
 
     for case in test_cases
         ode = case[1]
-        result = identifiability_ode(ode, get_parameters(ode))
+        result = identifiability_ode(ode, get_parameters(ode); weighted_ordering=true, known_states=[])
+        result_no_weights = identifiability_ode(ode, get_parameters(ode); weighted_ordering=false, known_states=[])
+
         @test case[2] == result
+        @test case[2] == result_no_weights
+
+        result = identifiability_ode(ode, get_parameters(ode); weighted_ordering=true, known_states=case[4])
+        result_no_weights = identifiability_ode(ode, get_parameters(ode); weighted_ordering=false, known_states=case[4])
+
+        @test case[3] == result
+        @test case[3] == result_no_weights
+
     end
 end
