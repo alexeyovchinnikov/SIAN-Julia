@@ -3,7 +3,7 @@
     @variables t x0(t) x1(t) y1(t)
     D = Differential(t)
 
-    eqs = [D(x0) ~ -(a01 + a21) * x0 + a12 * x1, D(x1) ~ a21 * x0 - a12 * x1, y1 ~ x0]
+    eqs = [D(x0) ~ -(a01 + a21) * x0 + a12 * x1, D(x1) ~ a21 * x0 - a12 * x1]
     measured_quantities = [y1 ~ x0]
     de = ODESystem(eqs, t, name=:Test)
     correct = Dict{Any,Any}(
