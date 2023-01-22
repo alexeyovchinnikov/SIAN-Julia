@@ -32,7 +32,7 @@
 
     de = ODESystem(eqs, t, name=:Test)
 
-    @test_throws ArgumentError identifiability_ode(de)
+    @test_throws ArgumentError identifiability_ode(de; measured_quantities=measured_quantities)
     #--------------------------------------------------------------------------
     @parameters a01 a21 a12
     @variables t x0(t) x1(t) y1(t)
