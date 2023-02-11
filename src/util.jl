@@ -155,10 +155,15 @@ end
 Evaluates a polynomial on a dict var => val
 missing values are replaced with zeroes
 """
-function eval_at_dict(poly::P, d::OrderedDict{P,<:RingElem}) where {P<:MPolyElem}
+function eval_at_dict(poly::P, d::AbstractDict{P,<:RingElem}) where {P<:MPolyElem}
 
     point = [get(d, v, base_ring(parent(poly))(0)) for v in gens(parent(poly))]
     return evaluate(poly, point)
+end
+
+function eval_at_dict(f::Generic.Frac{<: P}, d::AbstractDict{P,<:RingElem}) where {P<:MPolyElem}
+    num, den = unpack_fraction(f)
+    return eval_at_dict(num, d) // eval_at_dict(den, d)
 end
 
 # ------------------------------------------------------------------------------
