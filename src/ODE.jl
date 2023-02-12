@@ -50,7 +50,7 @@ function set_parameter_values(ode::ODE{P}, param_values::OrderedDict{P,T}) where
     return SIAN.ODE{P}(
         OrderedDict{P,Union{P,Generic.Frac{P}}}(eval_at_dict(v, eval_dict) => eval_at_dict(f, eval_dict) for (v, f) in ode.x_equations),
         OrderedDict{P,Union{P,Generic.Frac{P}}}(eval_at_dict(v, eval_dict) => eval_at_dict(f, eval_dict) for (v, f) in ode.y_equations),
-        [eval_at_dict(u, eval_dict) for u in ode.u_vars]
+        Array{P, 1}([eval_at_dict(u, eval_dict) for u in ode.u_vars])
     )
 end
 
