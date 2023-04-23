@@ -1,7 +1,7 @@
 module SIAN
 
 using Nemo
-using StructuralIdentifiability: PreprocessODE, eval_at_nemo, make_substitution
+using StructuralIdentifiability: preprocess_ode, eval_at_nemo, make_substitution
 using LinearAlgebra
 using Groebner
 using MacroTools
@@ -16,7 +16,7 @@ include("get_y_eq.jl")
 include("sample_point.jl")
 include("get_weights.jl")
 
-export identifiability_ode, PreprocessODE
+export identifiability_ode, preprocess_ode
 export @ODEmodel
 export ODE
 export get_parameters
@@ -312,7 +312,7 @@ function identifiability_ode(ode::ModelingToolkit.ODESystem, params_to_assess=[]
       throw(error("Measured quantities (output functions) were not provided and no outputs were found."))
     end
   end
-  ode_prep, input_syms, gens_ = PreprocessODE(ode, measured_quantities)
+  ode_prep, input_syms, gens_ = preprocess_ode(ode, measured_quantities)
   t = ModelingToolkit.arguments(ModelingToolkit.states(ode)[1])[1]
   if length(params_to_assess) == 0
     params_to_assess_ = SIAN.get_parameters(ode_prep)
