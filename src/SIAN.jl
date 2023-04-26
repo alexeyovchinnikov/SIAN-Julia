@@ -312,13 +312,13 @@ function identifiability_ode(ode::ModelingToolkit.ODESystem, params_to_assess=[]
       throw(error("Measured quantities (output functions) were not provided and no outputs were found."))
     end
   end
-  ode_prep, input_syms, gens_ = preprocess_ode(ode, measured_quantities)
+  ode_prep, conversion = preprocess_ode(ode, measured_quantities)
   t = ModelingToolkit.arguments(ModelingToolkit.states(ode)[1])[1]
   if length(params_to_assess) == 0
     params_to_assess_ = SIAN.get_parameters(ode_prep)
-    nemo2mtk = Dict(gens_ .=> input_syms)
+    nemo2mtk = Dict(keys(conversion) .=> values(conversion))
   else
-    params_to_assess_ = [eval_at_nemo(each, Dict(input_syms .=> gens_)) for each in params_to_assess]
+    params_to_assess_ = [eval_at_nemo(each, conversion) for each in params_to_assess]
     nemo2mtk = Dict(params_to_assess_ .=> params_to_assess)
   end
   if length(known_states) != 0
