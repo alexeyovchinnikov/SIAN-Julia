@@ -312,7 +312,11 @@ function identifiability_ode(ode::ModelingToolkit.ODESystem, params_to_assess=[]
       throw(error("Measured quantities (output functions) were not provided and no outputs were found."))
     end
   end
-  ode_prep, input_syms, gens_ = PreprocessODE(ode, measured_quantities)
+  #ode_prep, input_syms, gens_ = PreprocessODE(ode, measured_quantities)
+  ode_prep, symb2gens = preprocess_ode(ode, measured_quantities)
+  symb2gens = collect(symb2gens)
+  input_syms = [x[1] for x in symb2gens]
+  gens_ = [x[2] for x in symb2gens]                                                                                                                                      
   t = ModelingToolkit.arguments(ModelingToolkit.states(ode)[1])[1]
   if length(params_to_assess) == 0
     params_to_assess_ = SIAN.get_parameters(ode_prep)
