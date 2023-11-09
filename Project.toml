@@ -1,7 +1,7 @@
 name = "SIAN"
 uuid = "cf7bdac0-b945-4905-b5ad-bc3f1a757483"
 authors = ["Ilia Ilmer <i.ilmer@icloud.com>", "Alexey Ovchinnikov <Alexey.Ovchinnikov@qc.cuny.edu>", "Gleb Pogudin <gleb.pogudin@polytechnique.edu>"]
-version = "1.4.3"
+version = "1.4.2"
 
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
@@ -29,5 +29,7 @@ SpecialFunctions = "1, 2"
 StructuralIdentifiability = "0.4 - 0.6"
 SymbolicUtils = "0.18, 0.19, 1"
 TestSetExtensions = "2"
-
+LinearAlgebra = "1.0 - 2.0"
+Logging = "1.0 - 2.0"
+Test = "1.0 - 2.0"
 julia = "1"
