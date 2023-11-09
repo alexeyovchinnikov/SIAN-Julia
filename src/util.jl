@@ -270,9 +270,9 @@ function parent_ring_change(poly::MPolyElem, new_ring::MPolyRing)
             end
         end
         if typeof(coef) <: Nemo.fmpq
-            push_term!(builder, new_ring.base_ring(coef), new_exp)
+            push_term!(builder, base_ring(new_ring)(coef), new_exp)
         else
-            push_term!(builder, new_ring.base_ring(Nemo.data(coef)), new_exp)
+            push_term!(builder, base_ring(new_ring)(Nemo.data(coef)), new_exp)
         end
     end
     return finish(builder)
@@ -329,7 +329,7 @@ function add_zero_to_vars(poly::MPolyElem, new_ring::MPolyRing)
                 end
             end
         end
-        push_term!(builder, new_ring.base_ring(coef), new_exp)
+        push_term!(builder, base_ring(new_ring)(coef), new_exp)
     end
     return finish(builder)
 end
@@ -383,7 +383,7 @@ function add_to_vars_in_replica(poly::MPolyElem, mu, new_ring::MPolyRing, r)
                 end
             end
         end
-        push_term!(builder, new_ring.base_ring(coef), new_exp)
+        push_term!(builder, base_ring(new_ring)(coef), new_exp)
     end
     return finish(builder)
 end
