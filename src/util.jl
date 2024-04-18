@@ -56,7 +56,7 @@ with respect to variables `vars`.
 The matrix is evaluated at `vals` from a symbolic to numeric representation.
 """
 function jacobi_matrix(pol_arr, vrs, vals)
-    m = Nemo.MatrixSpace(Nemo.QQ, length(pol_arr), length(vrs))()
+    m = Nemo.matrix_space(Nemo.QQ, length(pol_arr), length(vrs))()
     for i in 1:length(pol_arr)
         for j in 1:length(vrs)
             m[i, j] = evaluate(derivative(pol_arr[i], vrs[j]), vals)
@@ -131,7 +131,7 @@ Given a list of variables `var_list` and a list of parameters `param_list`, crea
 """
 function create_jet_ring(var_list, param_list, max_ord)
     varnames = vcat(vec(["$(s)_$i" for s in var_list, i in 0:max_ord]), "z_aux", ["$(s)_0" for s in param_list])
-    return Nemo.PolynomialRing(Nemo.QQ, varnames)[1]
+    return Nemo.polynomial_ring(Nemo.QQ, varnames)[1]
 end
 
 # ------------------------------------------------------------------------------
@@ -150,39 +150,39 @@ end
 
 # ------------------------------------------------------------------------------
 """
-    func eval_at_dict(poly::P, d::OrderedDict{P,<: RingElem}) where P <: MPolyElem
+    func eval_at_dict(poly::P, d::OrderedDict{P,<: RingElem}) where P <: MPolyRingElem
 
 Evaluates a polynomial on a dict var => val
 missing values are replaced with zeroes
 """
-function eval_at_dict(poly::P, d::AbstractDict{P,<:RingElem}) where {P<:MPolyElem}
+function eval_at_dict(poly::P, d::AbstractDict{P,<:RingElem}) where {P<:MPolyRingElem}
 
     point = [get(d, v, base_ring(parent(poly))(0)) for v in gens(parent(poly))]
     return evaluate(poly, point)
 end
 
-function eval_at_dict(f::Generic.Frac{<: P}, d::AbstractDict{P,<:RingElem}) where {P<:MPolyElem}
+function eval_at_dict(f::Generic.FracFieldElem{<: P}, d::AbstractDict{P,<:RingElem}) where {P<:MPolyRingElem}
     num, den = unpack_fraction(f)
     return eval_at_dict(num, d) // eval_at_dict(den, d)
 end
 
 # ------------------------------------------------------------------------------
 """
-    func switch_ring(v::MPolyElem, ring::MPolyRing)
+    func switch_ring(v::MPolyRingElem, ring::MPolyRing)
 
 For a variable v, returns a variable in ring with the same name
 """
-function switch_ring(v::MPolyElem, ring::MPolyRing)
+function switch_ring(v::MPolyRingElem, ring::MPolyRing)
     ind = findfirst(vv -> vv == v, gens(parent(v)))
     return str_to_var(string(symbols(parent(v))[ind]), ring)
 end
 
 """
-    func var_to_str(v::MPolyElem)
+    func var_to_str(v::MPolyRingElem)
 
 Convert a variable to type `string`.
 """
-function var_to_str(v::MPolyElem)
+function var_to_str(v::MPolyRingElem)
     ind = findfirst(vv -> vv == v, gens(parent(v)))
     return string(symbols(parent(v))[ind])
 end
@@ -203,20 +203,20 @@ end
 # ------------------------------------------------------------------------------
 
 """
-    func unpack_fraction(f::MPolyElem)
+    func unpack_fraction(f::MPolyRingElem)
 
 A helper-function, returns a `Tuple` of the input `f` and its parent's multiplicative identity.
 """
-function unpack_fraction(f::MPolyElem)
+function unpack_fraction(f::MPolyRingElem)
     return (f, one(parent(f)))
 end
 
 """
-    func unpack_fraction(f::Generic.Frac{<: MPolyElem})
+    func unpack_fraction(f::Generic.FracFieldElem{<: MPolyRingElem})
 
 A helper-function, returns a `Tuple` of the numerator and denominator of `f`.
 """
-function unpack_fraction(f::Generic.Frac{<:MPolyElem})
+function unpack_fraction(f::Generic.FracFieldElem{<:MPolyRingElem})
     return (numerator(f), denominator(f))
 end
 
@@ -233,19 +233,19 @@ end
 
 # ------------------------------------------------------------------------------
 """
-        func parent_ring_change(poly::MPolyElem, new_ring::MPolyRing)
+        func parent_ring_change(poly::MPolyRingElem, new_ring::MPolyRing)
 
 Converts a polynomial to a different polynomial ring.
 
 ## Input:
-    - `poly::MPolyElem` - a polynomial to be converted
+    - `poly::MPolyRingElem` - a polynomial to be converted
     - `new_ring::MPolyRing` - a polynomial ring such that every variable name
         appearing in poly appears among the generators
 
 ## Output:
     - a polynomial in new_ring "equal" to `poly`
 """
-function parent_ring_change(poly::MPolyElem, new_ring::MPolyRing)
+function parent_ring_change(poly::MPolyRingElem, new_ring::MPolyRing)
     old_ring = parent(poly)
     # construct a mapping for the variable indices
     var_mapping = Array{Any,1}()
@@ -269,7 +269,7 @@ function parent_ring_change(poly::MPolyElem, new_ring::MPolyRing)
                 end
             end
         end
-        if typeof(coef) <: Nemo.fmpq
+        if typeof(coef) <: Nemo.QQFieldElem
             push_term!(builder, base_ring(new_ring)(coef), new_exp)
         else
             push_term!(builder, base_ring(new_ring)(Nemo.data(coef)), new_exp)
@@ -285,7 +285,7 @@ end
 Insert zeros at positions based on the variables' index.
 """
 function insert_zeros_to_vals(var_arr, val_arr)
-    all_val_arr = zeros(fmpq, length(gens(parent(var_arr[1]))))
+    all_val_arr = zeros(QQFieldElem, length(gens(parent(var_arr[1]))))
     for i in 1:length(var_arr)
         all_val_arr[var_index(var_arr[i])] = val_arr[i]
     end
@@ -294,19 +294,19 @@ end
 
 # ------------------------------------------------------------------------------
 """
-    func add_zero_to_vars(poly::MPolyElem, new_ring::MPolyRing)
+    func add_zero_to_vars(poly::MPolyRingElem, new_ring::MPolyRing)
 Converts a polynomial to a different polynomial ring.
 
 ## Input
 
-- `poly::MPolyElem` - a polynomial to be converted
+- `poly::MPolyRingElem` - a polynomial to be converted
 - `new_ring::MPolyRing` - a polynomial ring such that every variable name
 appearing in poly appears among the generators
 
 ## Output
 -  a polynomial in new_ring "equal" to `poly`
 """
-function add_zero_to_vars(poly::MPolyElem, new_ring::MPolyRing)
+function add_zero_to_vars(poly::MPolyRingElem, new_ring::MPolyRing)
     old_ring = parent(poly)
     # construct a mapping for the variable indices
     var_mapping = Array{Any,1}()
@@ -346,12 +346,12 @@ end
 
 # ------------------------------------------------------------------------------
 """
-    func add_to_vars_in_replica(poly::MPolyElem, mu, new_ring::MPolyRing, r)
+    func add_to_vars_in_replica(poly::MPolyRingElem, mu, new_ring::MPolyRing, r)
 
 A helper routine to add variables from symbols of the old ring based on `poly`, 
 to the `new_ring` object.
 """
-function add_to_vars_in_replica(poly::MPolyElem, mu, new_ring::MPolyRing, r)
+function add_to_vars_in_replica(poly::MPolyRingElem, mu, new_ring::MPolyRing, r)
     old_ring = parent(poly)
     # construct a mapping for the variable indices
     var_mapping = Array{Any,1}()
@@ -390,15 +390,15 @@ end
 
 # ------------------------------------------------------------------------------
 
-function eval_known_ic(poly::Nemo.fmpq_mpoly, konwn_states_jet_form::Vector{Nemo.fmpq_mpoly}, known_values::Vector{Nemo.fmpq})
+function eval_known_ic(poly::Nemo.QQMPolyRingElem, konwn_states_jet_form::Vector{Nemo.QQMPolyRingElem}, known_values::Vector{Nemo.QQFieldElem})
     return Nemo.evaluate(poly, konwn_states_jet_form, known_values)
 end
 
-function eval_known_ic(poly::Nemo.Generic.Frac{Nemo.fmpq_mpoly}, konwn_states_jet_form::Vector{Nemo.fmpq_mpoly}, known_values::Vector{Nemo.fmpq})
+function eval_known_ic(poly::Nemo.Generic.FracFieldElem{Nemo.QQMPolyRingElem}, konwn_states_jet_form::Vector{Nemo.QQMPolyRingElem}, known_values::Vector{Nemo.QQFieldElem})
     numer, denom = SIAN.unpack_fraction(poly)
     return Nemo.evaluate(numer, konwn_states_jet_form, known_values) // Nemo.evaluate(denom, konwn_states_jet_form, known_values)
 end
 
-function eval_known_ic(poly::Vector{Nemo.RingElem}, konwn_states_jet_form::Vector{Nemo.fmpq_mpoly}, known_values::Vector{Nemo.fmpq})
+function eval_known_ic(poly::Vector{Nemo.RingElem}, konwn_states_jet_form::Vector{Nemo.QQMPolyRingElem}, known_values::Vector{Nemo.QQFieldElem})
     return [poly[1], SIAN.eval_known_ic(poly[2], konwn_states_jet_form, known_values)]
 end

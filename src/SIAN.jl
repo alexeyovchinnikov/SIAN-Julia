@@ -1,13 +1,14 @@
 module SIAN
 
 using Nemo
-using StructuralIdentifiability: preprocess_ode, eval_at_nemo, make_substitution
 using LinearAlgebra
 using Groebner
 using MacroTools
 using OrderedCollections
 using ModelingToolkit
 using Logging # * for the @warn macro
+using StructuralIdentifiability
+using StructuralIdentifiability: make_substitution
 include("util.jl")
 include("ODE.jl")
 include("max_poly_system.jl")
@@ -107,14 +108,14 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0
   # (e) ------------------
   alpha = [1 for i in 1:n]
   beta = [0 for i in 1:m]
-  Et = Array{fmpq_poly}(undef, 0)
+  Et = Array{QQMPolyRingElem}(undef, 0)
   x_theta_vars = all_params
   prolongation_possible = [1 for i in 1:m]
 
   # (f) ------------------
   all_x_theta_vars_subs = SIAN.insert_zeros_to_vals(all_subs[1], all_subs[2])
-  eqs_i_old = Array{fmpq_mpoly}(undef, 0)
-  evl_old = Array{fmpq_mpoly}(undef, 0)
+  eqs_i_old = Array{QQMPolyRingElem}(undef, 0)
+  evl_old = Array{QQMPolyRingElem}(undef, 0)
   while sum(prolongation_possible) > 0
     for i in 1:m
       if prolongation_possible[i] == 1
@@ -129,12 +130,12 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0
           # adding necessary X-equations
           polys_to_process = vcat(Et, [Y[k][beta[k]+1] for k in 1:m])
           while length(polys_to_process) != 0
-            new_to_process = Array{fmpq_mpoly}(undef, 0)
-            vrs = Set{fmpq_mpoly}()
+            new_to_process = Array{QQMPolyRingElem}(undef, 0)
+            vrs = Set{QQMPolyRingElem}()
             for poly in polys_to_process
               vrs = union(vrs, [v for v in vars(poly) if v in x_variables])
             end
-            vars_to_add = Set{fmpq_mpoly}(v for v in vrs if !(v in x_theta_vars))
+            vars_to_add = Set{QQMPolyRingElem}(v for v in vrs if !(v in x_theta_vars))
             for v in vars_to_add
               x_theta_vars = vcat(x_theta_vars, v)
               ord_var = SIAN.get_order_var2(v, all_indets, n + m + u, s)
@@ -171,7 +172,7 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0
     end
   end
 
-  theta_l = Array{fmpq_mpoly}(undef, 0)
+  theta_l = Array{QQMPolyRingElem}(undef, 0)
   params_to_assess_ = [SIAN.add_to_var(param, Rjet, 0) for param in params_to_assess if !(param in known_states)]
   known_states_jet_form = [SIAN.add_to_var(param, Rjet, 0) for param in known_states]
   known_values = [evaluate(ic, all_x_theta_vars_subs) for ic in known_states_jet_form]
@@ -222,7 +223,7 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0
       push!(Et_hat, each[1] - each[2])
     end
 
-    Et_x_vars = Set{fmpq_mpoly}()
+    Et_x_vars = Set{QQMPolyRingElem}()
     for poly in Et_hat
       Et_x_vars = union(Et_x_vars, Set(vars(poly)))
     end
@@ -256,9 +257,9 @@ function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0
       Et_hat = [SIAN._reduce_poly_mod_p(e, p_mod) for e in Et_hat]
       z_aux = SIAN._reduce_poly_mod_p(z_aux, p_mod)
       Q_hat = SIAN._reduce_poly_mod_p(Q_hat, p_mod)
-      Rjet_new, vrs_sorted = Nemo.PolynomialRing(Nemo.GF(p_mod), [string(v) for v in vrs_sorted], ordering=:degrevlex)
+      Rjet_new, vrs_sorted = Nemo.polynomial_ring(Nemo.Native.GF(p_mod), [string(v) for v in vrs_sorted], internal_ordering=:degrevlex)
     else
-      Rjet_new, vrs_sorted = Nemo.PolynomialRing(Nemo.QQ, [string(v) for v in vrs_sorted], ordering=:degrevlex)
+      Rjet_new, vrs_sorted = Nemo.polynomial_ring(Nemo.QQ, [string(v) for v in vrs_sorted], internal_ordering=:degrevlex)
     end
 
 
@@ -313,20 +314,20 @@ function identifiability_ode(ode::ModelingToolkit.ODESystem, params_to_assess=[]
     end
   end
   #ode_prep, input_syms, gens_ = PreprocessODE(ode, measured_quantities)
-  ode_prep, symb2gens = preprocess_ode(ode, measured_quantities)
+  ode_prep, symb2gens = StructuralIdentifiability.mtk_to_si(ode, measured_quantities)
   symb2gens = collect(symb2gens)
   input_syms = [x[1] for x in symb2gens]
   gens_ = [x[2] for x in symb2gens]                                                                                                                                      
-  t = ModelingToolkit.arguments(ModelingToolkit.states(ode)[1])[1]
+  t = ModelingToolkit.arguments(ModelingToolkit.unknowns(ode)[1])[1]
   if length(params_to_assess) == 0
     params_to_assess_ = SIAN.get_parameters(ode_prep)
     nemo2mtk = Dict(gens_ .=> input_syms)
   else
-    params_to_assess_ = [eval_at_nemo(each, Dict(input_syms .=> gens_)) for each in params_to_assess]
+    params_to_assess_ = [StructuralIdentifiability.eval_at_nemo(each, Dict(input_syms .=> gens_)) for each in params_to_assess]
     nemo2mtk = Dict(params_to_assess_ .=> params_to_assess)
   end
   if length(known_states) != 0
-    known_states_ = [eval_at_nemo(each, Dict(input_syms .=> gens_)) for each in known_states]
+    known_states_ = [StructuralIdentifiability.eval_at_nemo(each, Dict(input_syms .=> gens_)) for each in known_states]
   else
     known_states_ = []
   end

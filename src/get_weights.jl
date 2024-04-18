@@ -12,7 +12,7 @@ function get_weights(ode, non_identifiable_parameters)
     s = length(mu) + n
 
     current_level = 0
-    visible_states = Dict{Int,Set{fmpq_mpoly}}(current_level => Set{fmpq_mpoly}())
+    visible_states = Dict{Int,Set{QQMPolyRingElem}}(current_level => Set{QQMPolyRingElem}())
     for eq in y_eqs
         numer, denom = SIAN.unpack_fraction(eq[2])
         # visible states must be in non-jet representation!
@@ -56,8 +56,8 @@ function get_weights(ode, non_identifiable_parameters)
                 end
 
                 # find states that newly appeared
-                visible_states[current_level] = union(get(visible_states, current_level, Set{fmpq_mpoly}()), Set(SIAN.get_order_var(vn, non_jet_ring)[1] for vn in vars(numer)))
-                visible_states[current_level] = union(get(visible_states, current_level, Set{fmpq_mpoly}()), Set(SIAN.get_order_var(vd, non_jet_ring)[1] for vd in vars(denom)))
+                visible_states[current_level] = union(get(visible_states, current_level, Set{QQMPolyRingElem}()), Set(SIAN.get_order_var(vn, non_jet_ring)[1] for vn in vars(numer)))
+                visible_states[current_level] = union(get(visible_states, current_level, Set{QQMPolyRingElem}()), Set(SIAN.get_order_var(vd, non_jet_ring)[1] for vd in vars(denom)))
 
                 # add previous level to "what we have seen so far"-set
                 union!(seen_so_far, visible_states[current_level-1])
@@ -75,7 +75,7 @@ function get_weights(ode, non_identifiable_parameters)
             break
         end
     end
-    weights = Dict{fmpq_mpoly,Int64}()
+    weights = Dict{QQMPolyRingElem,Int64}()
     max_level = current_level - 1
     for (level, states) in visible_states
         for st in states

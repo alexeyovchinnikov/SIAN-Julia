@@ -1,8 +1,8 @@
 function get_y_eq(x_eqs::Vector{Vector{Nemo.AbstractAlgebra.RingElem}}, y_eqs::Vector{Vector{Nemo.AbstractAlgebra.RingElem}}, n::Int, m::Int, s::Int, u::Int, gens_Rjet)
-    Y = Array{Nemo.fmpq_poly}(undef, 0)
-    Y_eq = Array{Nemo.fmpq_poly}(undef, 0)
+    Y = Array{Nemo.QQMPolyRingElem}(undef, 0)
+    Y_eq = Array{Nemo.QQMPolyRingElem}(undef, 0)
     for i in 1:m
-        Y = vcat(Y, [Array{Nemo.fmpq_poly}(undef, 0)])
+        Y = vcat(Y, [Array{Nemo.QQMPolyRingElem}(undef, 0)])
         poly_d = SIAN.unpack_fraction(y_eqs[i][1] - y_eqs[i][2])[1]
         for j in 0:s+1
             if j > 0
