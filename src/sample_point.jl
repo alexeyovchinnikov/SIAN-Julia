@@ -8,7 +8,7 @@ function replace_random_with_known(params, vals, known_states_jet_form, known_va
                     break
                 end
             end
-            vals[idx] = fmpq(known_values[found_index])
+            vals[idx] = QQFieldElem(known_values[found_index])
         end
     end
     return vals
@@ -23,12 +23,12 @@ function sample_point(bound, x_vars, y_vars, u_variables, all_params, X_eq, Y_eq
     local u_hat, theta_hat, all_subs
 
     s = length(all_params)
-    y_hat_vars = Array{fmpq_mpoly}(undef, 0)
-    y_hat_vals = Array{fmpq}(undef, 0)
+    y_hat_vars = Array{QQMPolyRingElem}(undef, 0)
+    y_hat_vals = Array{QQFieldElem}(undef, 0)
 
     while true
-        theta_hat = replace_random_with_known(all_params, [fmpq(rnd) for rnd in rand(0:bound, s)], known_states_jet_form, known_values)
-        u_hat = replace_random_with_known(u_variables, [fmpq(rnd) for rnd in rand(0:bound, length(u_variables))], known_states_jet_form, known_values)
+        theta_hat = replace_random_with_known(all_params, [QQFieldElem(rnd) for rnd in rand(0:bound, s)], known_states_jet_form, known_values)
+        u_hat = replace_random_with_known(u_variables, [QQFieldElem(rnd) for rnd in rand(0:bound, length(u_variables))], known_states_jet_form, known_values)
         all_subs = [vcat(all_params, u_variables), vcat(theta_hat, u_hat)]
         if evaluate(Q, all_subs[1], all_subs[2]) == 0
             continue

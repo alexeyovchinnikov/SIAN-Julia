@@ -2,7 +2,7 @@ using Test
 using TestSetExtensions
 
 using SIAN
-using ModelingToolkit
+using Nemo, ModelingToolkit
 
 @info "Testing started"
 
