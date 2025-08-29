@@ -19,10 +19,10 @@ SymbolicUtils = "d1185830-fcd6-423d-90d6-eec64667417b"
 
 [compat]
 BenchmarkTools = "1"
-Groebner = "0.6, 0.7, 0.8"
+Groebner = "0.6, 0.7, 0.8, 0.9"
 MacroTools = "0.5"
-ModelingToolkit = "9"
-Nemo = "0.40 - 0.48"
+ModelingToolkit = "9, 10"
+Nemo = "0.40 - 0.51"
 OrderedCollections = "1"
 SpecialFunctions = "1, 2"
 StructuralIdentifiability = "0.5"
