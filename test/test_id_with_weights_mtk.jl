@@ -1,6 +1,7 @@
 @testset "Testing identifiability with weights for MTK systems" begin
+    @independent_variables t
     @parameters a01 a21 a12
-    @variables t x0(t) x1(t) y1(t) [output = true]
+    @variables x0(t) x1(t) y1(t) [output = true]
     D = Differential(t)
 
     eqs = [D(x0) ~ -(a01 + a21) * x0 + a12 * x1, D(x1) ~ a21 * x0 - a12 * x1, y1 ~ x0]
