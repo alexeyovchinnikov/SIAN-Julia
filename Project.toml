@@ -1,7 +1,7 @@
 name = "SIAN"
 uuid = "cf7bdac0-b945-4905-b5ad-bc3f1a757483"
 authors = ["Ilia Ilmer <i.ilmer@icloud.com>", "Alexey Ovchinnikov <Alexey.Ovchinnikov@qc.cuny.edu>", "Gleb Pogudin <gleb.pogudin@polytechnique.edu>"]
-version = "1.8.1"
+version = "1.7.2"
 
 [deps]
 Groebner = "0b43b601-686d-58a3-8a1c-6623616c7cd4"
