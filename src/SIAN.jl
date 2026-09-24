@@ -29,7 +29,7 @@ export get_parameters
 #
 
 """
-    func identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, weighted_ordering=false, local_only=false)
+    func identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, weighted_ordering=true, local_only=false)
 
 Perform identifiability check for a given `ode` system with respect to parameters in `params_to_assess` list.
 
@@ -44,7 +44,7 @@ Perform identifiability check for a given `ode` system with respect to parameter
   - `weighted_ordering` - a boolean, if true, use weighted ordering, default `false`.
   - `local_only` - a boolean, if true, assess only local identifiability, default `false`.
 """
-function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0, weighted_ordering=false, local_only=false, known_states=[])
+function identifiability_ode(ode, params_to_assess; p=0.99, p_mod=0, infolevel=0, weighted_ordering=true, local_only=false, known_states=[])
 
   if infolevel > 0
     debuglogger = ConsoleLogger(stderr, Logging.Debug)
